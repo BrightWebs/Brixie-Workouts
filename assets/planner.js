@@ -141,7 +141,12 @@ function draftItemField(index,key,value){
   if(!validItem(item)){toast('Use valid sets, reps, load, duration and rest values');render();return}
   DRAFT.items[index]=item;persistDraft();
 }
-function toggleDraftTarget(id){DRAFT.targets=DRAFT.targets.includes(id)?DRAFT.targets.filter(x=>x!==id):[...DRAFT.targets,id];persistDraft();render()}
+function toggleDraftTarget(id){
+  const opened=[...document.querySelectorAll('#view details')].map(detail=>detail.open);
+  DRAFT.targets=DRAFT.targets.includes(id)?DRAFT.targets.filter(x=>x!==id):[...DRAFT.targets,id];
+  persistDraft();render();
+  document.querySelectorAll('#view details').forEach((detail,index)=>{detail.open=opened[index]||false});
+}
 function toggleDraftEquipment(id){DRAFT.equipment=DRAFT.equipment.includes(id)?DRAFT.equipment.filter(x=>x!==id):[...DRAFT.equipment,id];persistDraft();render()}
 function addDraftExercise(id){
   if(!EXI[id]){toast('Choose an exercise from the library');return}

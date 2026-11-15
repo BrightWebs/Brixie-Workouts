@@ -9,7 +9,7 @@ const core=[...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)].find(m=>m[
 const planner=fs.readFileSync(path.join(root,'assets/planner.js'),'utf8');
 function harness(){
   const storage=new Map(),context=vm.createContext({
-    console,TextEncoder,window:{matchMedia:()=>({matches:false})},navigator:{},performance:{now:()=>0},
+    console,TextEncoder,window:{matchMedia:()=>({matches:false}),addEventListener(){}},navigator:{},performance:{now:()=>0},
     document:{querySelector:()=>({scrollTo(){}}),addEventListener(){}},setTimeout(){},
     localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)}
   });
@@ -136,4 +136,17 @@ test('calendar folds long names at 75 UTF-8 bytes without losing text',()=>{
   })()`);
   assert.ok(calendar.split('\r\n').every(line=>Buffer.byteLength(line)<=75));
   assert.match(calendar.replace(/\r\n /g,''),/SUMMARY:Repeated long workout name Repeated long workout name Repeated long workout name /);
+});
+test('selecting anatomical targets preserves expanded builder settings and saves the draft',()=>{
+  const run=harness();
+  const result=run(`(()=>{
+    let details=[{open:true},{open:false}];
+    document.querySelectorAll=()=>details;
+    render=()=>{details=[{open:false},{open:false}]};
+    DRAFT=blankRoutine();toggleDraftTarget('chest');
+    const selected={targets:DRAFT.targets.slice(),saved:DB.workoutDraft.targets.slice(),expanded:details.map(d=>d.open)};
+    toggleDraftTarget('chest');
+    return {selected,deselected:DRAFT.targets,expanded:details.map(d=>d.open)};
+  })()`);
+  assert.deepEqual(result,{selected:{targets:['chest'],saved:['chest'],expanded:[true,false]},deselected:[],expanded:[true,false]});
 });

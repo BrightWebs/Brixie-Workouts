@@ -262,6 +262,10 @@ select.field{appearance:none;-webkit-appearance:none;background-image:linear-gra
 .journey-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .journey-options .field{min-width:0}
 .muscle-panel{background:var(--s2);border:1px solid var(--ln);border-radius:16px;padding:14px;margin:12px 0}
+.anatomy-frame{display:block;width:100%;height:520px;border:1px solid var(--ln);border-radius:14px;margin:12px 0;background:#10151c}
+.anatomy-credit{font-size:10px;line-height:1.6;color:var(--mu)}
+.anatomy-credit a{color:inherit;text-decoration:underline}
+@media(min-width:530px){.anatomy-frame{height:490px}}
 .muscle-views{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:320px;margin:12px auto}
 .muscle-view{text-align:center;font-size:11px;color:var(--mu)}
 .muscle-view svg{display:block;width:100%;height:220px}
@@ -874,7 +878,7 @@ function useStarterPlan(){
 function vHome(){
   const p=DB.preferences,g=JOURNEYS[p.goal],ids=starterPlan();
   return `<header class="top"><div><div class="eyebrow">Move with a purpose</div><h2>Rebuild</h2></div><button class="avatar" onclick="go('profile')" aria-label="Profile">${IC.user}</button></header>
-    <section class="welcome"><div class="welcome-demo">${animSVG('goblet')}</div><div class="eyebrow" style="color:var(--ac)">Your next chapter starts here</div><h1>A plan that starts<br>where you are.</h1><p class="muted">Find your focus. Learn the equipment. See the muscles at work. Build a routine you can return to.</p>
+    <section class="welcome"><div class="eyebrow" style="color:var(--ac)">Your next chapter starts here</div><h1>A plan that starts<br>where you are.</h1><p class="muted">Find your focus. Learn the equipment. See the muscles at work. Build a routine you can return to.</p>
     <div class="row2"><button class="btn" onclick="document.getElementById('chooseGoal').scrollIntoView({behavior:'smooth'})">Find my starting point</button><button class="btn2" onclick="go('today')">My workout</button></div></section>
     <section id="chooseGoal"><div class="eyebrow">01 / Your direction</div><h2 style="margin-top:5px">What brings you here?</h2><p class="small muted">Change your goal any time. Choosing a goal does not erase your plan or workout history.</p>
     <div class="goal-grid">${Object.entries(JOURNEYS).map(([id,j],i)=>`<button class="goal-card" aria-pressed="${id===p.goal}" onclick="chooseJourney('${id}')"><span class="goal-number">0${i+1}</span><b>${esc(j.name)}</b><span>${esc(j.desc)}</span></button>`).join('')}</div></section>
@@ -887,12 +891,12 @@ function vHome(){
     <div class="chips"><span class="chip k">~${Math.round(starterMinutes(ids))} min including rest</span><span class="chip">${ids.length} moves</span><span class="chip">${p.duration} min available</span></div>
     <p class="small">${ids.map(id=>esc(EXI[id].name)).join(' &middot; ')}</p>
     <button class="btn" onclick="useStarterPlan()" ${ACTIVE?'disabled style="opacity:.5"':''}>${ACTIVE?'Finish active workout to use this plan':'Use this starter plan'}</button><p class="small muted">Replaces your selected moves only when you press this button. Your history, charts and profile stay intact.</p></section>
-    <section class="card"><div class="eyebrow">03 / Learn before you lift</div><h2 style="margin-top:5px">Know your next move.</h2><div class="fig bigfig">${animSVG('goblet')}</div>
+    <section class="card"><div class="eyebrow">03 / Learn before you lift</div><h2 style="margin-top:5px">Know your next move.</h2>${muscleMap(EXI.goblet)}
     <div class="row2"><button class="btn2" onclick="go('machines')">Equipment & QR lookup</button><button class="btn2" onclick="openEx('tread')">Explore a warm-up</button></div>
-    <p class="small muted">Original movement illustrations and muscle maps, with setup, breathing and safety notes. Club equipment varies; check the actual machine label.</p></section>
+    <p class="small muted">Explore openly licensed 3D anatomy alongside exercise setup, breathing and safety notes. Club equipment varies; check the actual machine label.</p></section>
     <section class="card"><h3>A sustainable baseline</h3><p class="small muted">CDC guidance for adults is at least 150 minutes of moderate aerobic activity each week and muscle-strengthening activity on at least 2 days. Start with what you can manage and build gradually. A starter session is not a complete weekly prescription.</p>
     <p class="small muted">This site is general exercise education, not medical advice or a personalized treatment plan. Ask a qualified professional about injuries, health conditions or unfamiliar equipment.</p>
-    <details class="how source-links"><summary>Research & reference links</summary><p class="small muted">Product patterns informed goal selection, equipment discovery and muscle maps. The illustrations here are original; no third-party animation or video has been copied.</p>
+    <details class="how source-links"><summary>Research & reference links</summary><p class="small muted">Product patterns informed goal selection, equipment discovery and muscle maps. The 3D anatomy is openly licensed from Z-Anatomy / BodyParts3D via Fit Mit With; see the credits beneath each model. Schematic movement guides remain original illustrations, separate from the anatomy model.</p>
     <a href="https://fitbod.me/" target="_blank" rel="noopener">Fitbod: goal and equipment-based workout discovery</a><a href="https://www.nike.com/ntc-app" target="_blank" rel="noopener">Nike Training Club: guided workout categories</a><a href="https://musclewiki.com/" target="_blank" rel="noopener">MuscleWiki: muscle-based exercise discovery</a>
     <a href="https://www.planetfitness.com/mobileapp" target="_blank" rel="noopener">Planet Fitness: official app and equipment tutorials</a><a href="https://www.cdc.gov/physical-activity-basics/guidelines/adults.html" target="_blank" rel="noopener">CDC: adult physical activity guidelines</a><a href="https://www.cdc.gov/physical-activity-basics/benefits/physical-activity-and-your-weight.html" target="_blank" rel="noopener">CDC: activity and weight management</a></details></section>
     <p class="small muted" style="text-align:center">Your data stays in this browser. Back up your progress in Profile.</p>`;
@@ -946,17 +950,19 @@ function muscleMap(e,targets=EX_TARGETS[e.id],interactive=false){
   if(!targets)return'';
   const [primary,secondary]=targets,labels=ids=>ids.map(id=>MUSCLE_REGIONS[id].label).join(', ');
   const mode=e.sec==='cool'?'Stretch emphasis':e.sec==='mob'?'Movement emphasis':e.sec==='warm'||e.sec==='fin'?'Active muscle groups':'Primary muscles';
-  const outline='M88 52L87 61L61 66Q48 71 43 95L39 131L32 165L38 178L46 175L59 139L65 110L73 137L73 158L69 181L73 226L74 271L68 284L92 284L96 232L100 195L104 232L108 284L132 284L126 271L127 226L131 181L127 158L127 137L135 110L141 139L154 175L162 178L168 165L161 131L157 95Q152 71 139 66L113 61L112 52Z';
-  return `<section class="muscle-panel"><h3>Muscles in this move</h3><div class="muscle-views">${['front','back'].map(view=>`<div class="muscle-view"><svg viewBox="0 0 200 300" role="img" aria-label="${view==='front'?'Front':'Back'} muscle map for ${esc(e.name)}: ${esc(labels(primary))}">
-    <ellipse cx="100" cy="31" rx="17" ry="22" fill="#303943" stroke="#66717f"/><path d="${outline}" fill="#1c242d" stroke="#66717f" stroke-width="1.5"/>
-    ${Object.entries(MUSCLE_REGIONS).filter(([,r])=>r.view===view||r.view==='both').map(([id,r])=>{
-      const attrs=interactive?`role="button" tabindex="0" aria-label="Select ${esc(r.label)}" aria-pressed="${primary.includes(id)}" onclick="toggleDraftTarget('${id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDraftTarget('${id}')}"`:'';
-      return `<path class="muscle-region ${primary.includes(id)?'primary':secondary.includes(id)?'secondary':''}" d="${r.path}" ${attrs}><title>${esc(r.label)}${primary.includes(id)?': '+mode:secondary.includes(id)?': supporting / also involved':''}</title></path>`;
-    }).join('')}</svg>${view==='front'?'Front':'Back'}</div>`).join('')}</div>
+  const query=`primary=${encodeURIComponent(primary.join(','))}&secondary=${encodeURIComponent(secondary.join(','))}&interactive=${interactive?1:0}`;
+  return `<section class="muscle-panel"><h3>Muscles in this move</h3><iframe class="anatomy-frame" loading="lazy" src="assets/anatomy/viewer.html?${query}" title="3D front and back muscle anatomy for ${esc(e.name)}"></iframe>
     <div class="muscle-legend"><span><i></i>${esc(mode)}</span><span class="support"><i></i>Supporting / also involved</span></div>
     <p class="small"><b>${esc(mode)}:</b> ${esc(labels(primary))}${secondary.length?`<br><b>Also involved:</b> ${esc(labels(secondary))}`:''}</p>
-    <p class="small muted">Simplified surface-region illustration, not an exact anatomy or activation measurement.${e.sec==='warm'||e.sec==='fin'?' This is aerobic movement; highlighting does not mean it trains those muscles like resistance work.':''}${e.sec==='cool'||e.sec==='mob'?' Highlighted areas are moved or stretched, not a claim of muscle growth.':''}</p></section>`;
+    <p class="small muted">3D anatomical reference, not an exercise animation. Highlights identify broad target groups, not measured activation. Use Isolate targets to reveal deeper muscles, including spinal extensors; not every target is visible from every view.${e.sec==='warm'||e.sec==='fin'?' Aerobic involvement is not equivalent to resistance training.':''}${e.sec==='cool'||e.sec==='mob'?' These regions are moved or stretched, not a claim of muscle growth.':''}</p>
+    <p class="anatomy-credit">Atlas adapted by Fit Mit With from <a href="https://github.com/Z-Anatomy/Models-of-human-anatomy" target="_blank" rel="noopener">Z-Anatomy</a> / BodyParts3D. <a href="assets/anatomy/credits.html" target="_blank" rel="noopener">Credits, source &amp; CC BY-SA 4.0 license</a>. Display changes: neutral shading, exercise highlights, paired camera views.</p></section>`;
 }
+window.addEventListener('message',event=>{
+  if(event.origin!==location.origin||event.data?.type!=='rebuild:select-muscle')return;
+  const source=[...document.querySelectorAll('.anatomy-frame')].find(frame=>frame.contentWindow===event.source);
+  if(!source||new URL(source.src).searchParams.get('interactive')!=='1'||!DRAFT||PLANNER_MODE!=='edit')return;
+  if(Object.hasOwn(MUSCLE_REGIONS,event.data.group))toggleDraftTarget(event.data.group);
+});
 function chooseMuscle(id){EX_MUSCLE=id;filterExercises();document.querySelectorAll('[data-muscle-filter]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.muscleFilter===id))}
 
 /* ================= calories & profile math ================= */
@@ -1137,9 +1143,9 @@ function openSheet(html){$('#sheetRoot').innerHTML=`<div class="sheet" onclick="
 function closeSheet(){$('#sheetRoot').innerHTML=''}
 function openEx(id){const e=EXI[id];const ss=setsFor(id);
   let h=`<div class="eyebrow" style="color:${SEC[e.sec].c}">${SEC[e.sec].name}</div><h2 style="margin:4px 0 2px">${esc(e.name)}</h2>
-  ${exerciseDemo(e)}
   <div class="chips"><span class="chip k">${esc(e.equip)}</span><span class="chip">${esc(e.muscles)}</span></div>
   ${muscleMap(e)}
+  <details class="how"><summary>Schematic movement guide (not a human video)</summary>${exerciseDemo(e)}</details>
   <div class="kv"><div><div class="lbl">Today's target</div><div class="num">${esc(rxStr(e))}</div></div>
   <div><div class="lbl">${e.type==='sets'?(e.w===null?'Load':'Suggested weight'):'Duration'}</div><div class="num">${e.type==='time'?fmtT(e.dur):e.w===null?'Bodyweight':suggestW(e)+' lb'}</div></div>
   <div><div class="lbl">Est. time</div><div class="num">${e.min<2?Math.round(e.min*60)+' s':Math.round(e.min*10)/10+' min'}</div></div>
@@ -1289,7 +1295,7 @@ function renderMachineDetail(id){
   const e=m.exercise?EXI[m.exercise]:null,steps=machineSteps(m);
   root.innerHTML=`<section class="card" style="margin-top:12px"><div class="row"><div><div class="eyebrow">${esc(m.category)} · ${esc(machineCode(m))}</div><h2 style="margin-top:4px">${esc(m.name)}</h2></div><button class="btn2 sm" onclick="closeMachineDetail()">Close</button></div>
     ${MACHINE_MANUAL?'<p class="warn">Opened using your saved manual QR match. This is your association, not a verified machine/model lookup.</p>':''}
-    ${e?`${exerciseDemo(e)}<p class="small muted">${m.example?'One example use':'Movement demonstration'}: ${esc(e.name)}. ${m.example?'This is not a guide to every mode or exercise on this equipment. ':''}It illustrates the movement pattern; machine model, seat and adjustment points can differ by club. Use the on-machine instructions or staff demonstration for model-specific setup.</p>${muscleMap(e)}`:`<div class="fig bigfig">${machineSketch(m)}</div><p class="small muted">Setup illustration only, not a model-specific movement animation. Follow the diagram and adjustment labels on the equipment.</p>`}
+    ${e?`${muscleMap(e)}<details class="how"><summary>Schematic movement guide (not a human video)</summary>${exerciseDemo(e)}<p class="small muted">${m.example?'One example use':'Movement demonstration'}: ${esc(e.name)}. ${m.example?'This is not a guide to every mode or exercise on this equipment. ':''}It illustrates the movement pattern; machine model, seat and adjustment points can differ by club. Use the on-machine instructions or staff demonstration for model-specific setup.</p></details>`:`<div class="fig bigfig">${machineSketch(m)}</div><p class="small muted">Setup illustration only, not a model-specific movement animation. Follow the diagram and adjustment labels on the equipment.</p>`}
     <div class="chips"><span class="chip k">${esc(m.category)}</span><span class="chip">${esc(machineMuscles(m))}</span></div>
     <h3>Equipment setup and start position</h3><p class="small muted">${esc(m.setup)}</p>
     <h3>How to use it</h3><ol class="cues">${steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>
@@ -1497,11 +1503,11 @@ function renderWO(){
    <div class="eyebrow" style="color:${sc.c}">${sc.name} · ${ACTIVE.idx+1} of ${ACTIVE.items.length}</div>
    ${ACTIVE.name?`<div class="small muted">${esc(ACTIVE.name)}</div>`:''}
    ${ACTIVE.pausedAt?'<div class="paused-banner"><b>Workout paused</b><div class="small">Exercise, rest and elapsed workout timers are frozen.</div></div>':''}
-   ${exerciseDemo(e)}
    <h2>${esc(e.name)}</h2>
    <div class="chips"><span class="chip k">${esc(e.equip)}</span><span class="chip">${esc(e.muscles)}</span></div>
+   ${muscleMap(e)}
+   <details class="how"><summary>Schematic movement guide (not a human video)</summary>${exerciseDemo(e)}</details>
    <details class="how"><summary>Setup, movement & breathing</summary><ul class="cues">${e.cues.map(c=>`<li>${esc(c)}</li>`).join('')}</ul><p class="small muted"><b>Breathing:</b> ${esc(breathingFor(e))}</p><div class="warn"><b>Avoid:</b> ${esc(e.mistake)}</div></details>
-   <details class="how"><summary>See the muscles involved</summary>${muscleMap(e)}</details>
    ${activeControls()}
    ${panel}
    ${ACTIVE.idx<ACTIVE.items.length-1?`<p class="small muted" style="margin:4px 2px">Up next: <b style="color:var(--tx)">${esc(EXI[ACTIVE.items[ACTIVE.idx+1].id].name)}</b></p>`:''}
