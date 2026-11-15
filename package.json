@@ -1,0 +1,11 @@
+{
+  "name": "rebuild-workout-tracker",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/planner.test.cjs",
+    "vendor": "node -e \"const fs=require('fs');fs.mkdirSync('assets',{recursive:true});fs.copyFileSync('node_modules/jsqr/dist/jsQR.js','assets/jsQR.js');fs.copyFileSync('node_modules/jsqr/LICENSE','assets/jsQR.LICENSE')\""
+  },
+  "dependencies": {
+    "jsqr": "1.4.0"
+  }
+}
