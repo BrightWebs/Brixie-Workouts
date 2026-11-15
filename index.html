@@ -212,10 +212,14 @@ select.field{appearance:none;-webkit-appearance:none;background-image:linear-gra
 .plan-tools .search{flex:1}
 .plan-item{display:flex;align-items:center;gap:8px;flex:none}
 .plan-item input{width:20px;height:20px;accent-color:var(--ac)}
-.library-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--ln)}
+.library-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--ln)}
 .library-item:last-child{border-bottom:0}
 .library-item .item-open{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:0;border:0;background:none;text-align:left}
 .library-item .item-open .rt{flex:1;min-width:0}
+.library-item .rn{display:block;font-weight:600;overflow-wrap:anywhere}
+.library-item .rs{display:block;font-size:12.5px;color:var(--mu);overflow-wrap:anywhere}
+.library-item .rr{max-width:80px;font-size:12px;color:var(--mu);text-align:right;overflow-wrap:anywhere}
+.library-item .rr b{display:block;color:var(--tx);font-size:13px}
 .stage-note{background:var(--s2);border-radius:12px;padding:10px 12px;margin:8px 0;font-size:13px;color:var(--mu)}
 .catalog-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .catalog-card{background:var(--s1);border:1px solid var(--ln);border-radius:16px;padding:14px;min-width:0}
@@ -702,7 +706,7 @@ function frame(ts){
   requestAnimationFrame(frame);
 }
 const animSVG=(id,cls)=>`<svg class="anim" data-ex="${id}" viewBox="0 0 200 200" role="img" aria-label="${esc(EXI[id].name)} animation"></svg>`;
-const thumbSVG=e=>`<svg class="thumb" viewBox="0 0 200 200" aria-hidden="true">${figSVG(e,.32)}</svg>`;
+const thumbSVG=e=>`<svg class="thumb anim" data-ex="${e.id}" viewBox="0 0 200 200" aria-hidden="true">${figSVG(e,.32)}</svg>`;
 
 /* ================= routing ================= */
 let VIEW='today';
@@ -780,7 +784,7 @@ function vToday(){
   for(const k in SEC){const s=SEC[k];
     h+=`<div class="sech"><div class="t"><span class="dot" style="--c:${s.c}"></span><h3>${s.name}</h3></div><div class="m">${Math.round(secMin(k))} min · ~${secKcal(k)} kcal</div></div><div class="secdesc">${s.desc}</div><div class="list">`;
     EX.filter(e=>e.sec===k).forEach(e=>{const l=lastFor(e.id);
-      h+=`<div class="library-item" data-ex-search="${e.id}"><label class="plan-item" title="Add ${esc(e.name)} to your session"><input type="checkbox" ${DB.plan.selected.includes(e.id)?'checked':''} onchange="togglePlan('${e.id}',this.checked)" aria-label="Add ${esc(e.name)} to plan"></label><button class="item-open" onclick="openEx('${e.id}')">${thumbSVG(e)}<span class="rt"><span class="rn">${esc(e.name)}</span><span class="rs">${esc(rxStr(e))} · ${esc(e.equip)} · ~${e.min<2?Math.round(e.min*60)+' sec':e.min+' min'}</span></span></button><span class="item rr">${l?`<b>${esc(bestSetStr(e,l))}</b>last time`:e.type==='time'?`<b>${fmtT(e.dur)}</b>timer`:e.w?`<b>~${e.w} lb</b>start`:'<b>BW</b>bodyweight'}</span></div>`});
+      h+=`<div class="library-item" data-ex-search="${e.id}"><label class="plan-item" title="Add ${esc(e.name)} to your session"><input type="checkbox" ${DB.plan.selected.includes(e.id)?'checked':''} onchange="togglePlan('${e.id}',this.checked)" aria-label="Add ${esc(e.name)} to plan"></label><button class="item-open" onclick="openEx('${e.id}')">${thumbSVG(e)}<span class="rt"><span class="rn">${esc(e.name)}</span><span class="rs">${esc(rxStr(e))} · ${esc(e.equip)} · ~${e.min<2?Math.round(e.min*60)+' sec':e.min+' min'}</span></span></button><span class="rr">${l?`<b>${esc(bestSetStr(e,l))}</b>last time`:e.type==='time'?`<b>${fmtT(e.dur)}</b>timer`:e.w?`<b>~${e.w} lb</b>start`:'<b>BW</b>bodyweight'}</span></div>`});
     h+=`<p class="empty hidden" data-ex-empty="${k}">No ${esc(s.name.toLowerCase())} moves match that search.</p>`;
     h+='</div>'}
   h+=`<p class="small muted" style="margin:18px 4px">Tap any move to see its exercise-specific animation, setup, cues, breathing and safety notes. You can also browse the Machines guide for equipment-specific setup tips.</p>`;
