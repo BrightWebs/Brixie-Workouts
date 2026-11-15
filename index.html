@@ -201,6 +201,42 @@ select.field{appearance:none;-webkit-appearance:none;background-image:linear-gra
 .src li{margin:6px 0;font-size:13.5px}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translateX(-50%);z-index:60;background:#20261a;border:1px solid #3c4d17;color:var(--tx);padding:10px 16px;border-radius:12px;font-weight:600;font-size:14px;animation:fade .2s}
 .pr{display:inline-block;background:var(--ac);color:var(--ink);font-weight:800;font-size:11px;border-radius:6px;padding:2px 6px;margin-left:6px;vertical-align:2px}
+.planner{border-color:#3a4820;background:linear-gradient(145deg,#191f12,var(--s1) 60%)}
+.plan-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.plan-stat{background:rgba(0,0,0,.24);border:1px solid var(--ln);border-radius:12px;padding:9px}
+.plan-stat b{display:block;font:700 22px/1 "Barlow Condensed",Inter,sans-serif}
+.plan-stat span{font-size:11px;color:var(--mu)}
+.plan-tools{display:flex;gap:8px;align-items:center;margin:10px 0}
+.plan-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:-2px 0 10px}
+.plan-tools .field{min-width:0}
+.plan-tools .search{flex:1}
+.plan-item{display:flex;align-items:center;gap:8px;flex:none}
+.plan-item input{width:20px;height:20px;accent-color:var(--ac)}
+.library-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--ln)}
+.library-item:last-child{border-bottom:0}
+.library-item .item-open{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:0;border:0;background:none;text-align:left}
+.library-item .item-open .rt{flex:1;min-width:0}
+.stage-note{background:var(--s2);border-radius:12px;padding:10px 12px;margin:8px 0;font-size:13px;color:var(--mu)}
+.catalog-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.catalog-card{background:var(--s1);border:1px solid var(--ln);border-radius:16px;padding:14px;min-width:0}
+.catalog-card .fig{height:150px;margin:10px 0}
+.catalog-tools{display:grid;grid-template-columns:1fr auto;gap:8px;margin:12px 0}
+.catalog-tools .field{min-width:0}
+.code{font:600 11px ui-monospace,monospace;color:var(--mu);background:var(--s2);border-radius:7px;padding:4px 7px}
+.print-root{display:none}
+.print-guide{font:14px/1.5 Arial,sans-serif;color:#111;max-width:760px;margin:0 auto}
+.print-guide h1,.print-guide h2,.print-guide h3{font-family:Arial,sans-serif;color:#111}
+.print-guide h1{font-size:26px;margin:0 0 4px}
+.print-guide h2{font-size:17px;margin:18px 0 6px}
+.print-guide .print-meta{color:#444;border-bottom:2px solid #222;padding-bottom:10px}
+.print-guide li{margin:5px 0}
+.print-guide .print-warning{border:1px solid #777;padding:9px;margin-top:12px}
+@media(max-width:420px){.plan-grid{gap:5px}.plan-stat{padding:8px 6px}.plan-stat b{font-size:19px}.catalog-grid{grid-template-columns:1fr}.catalog-tools{grid-template-columns:1fr}.library-item{padding:9px 8px}.plan-tools{align-items:stretch}}
+@media print{
+  body>*:not(#printRoot){display:none!important}
+  #printRoot{display:block!important;background:#fff;color:#111;position:absolute;inset:0;padding:16mm}
+  .print-guide{display:block}
+}
 @media (min-width:600px){.app{padding-top:28px}}
 </style>
 </head>
@@ -210,6 +246,7 @@ select.field{appearance:none;-webkit-appearance:none;background-image:linear-gra
 <nav class="tabs"><div class="in" id="tabs"></div></nav>
 <div id="woRoot"></div>
 <div id="sheetRoot"></div>
+<div id="printRoot" class="print-root"></div>
 <script>
 "use strict";
 /* ================= storage ================= */
@@ -311,6 +348,7 @@ const SEC={
   warm:{name:'Warm-up',c:'var(--warm)',desc:'Raise heart rate and body temperature.'},
   mob:{name:'Dynamic mobility',c:'var(--mob)',desc:'Move every joint through its range. No weights.'},
   str:{name:'Full-body strength',c:'var(--str)',desc:'Light to moderate weight. Stop 3–5 reps before failure.'},
+  fin:{name:'Optional finisher',c:'var(--ac)',desc:'A short, controlled effort. Skip it if you are tired or short on time.'},
   cool:{name:'Cool-down stretch',c:'var(--cool)',desc:'Slow, easy holds while your heart rate settles.'}
 };
 const STAND={h:[100,110],t:0,foot:[103,180],foot2:[97,180],kb:[1,0]};
@@ -427,6 +465,90 @@ const EX=[
  A:{h:[100,112],t:-8,hand:[64,28],foot:[104,180],foot2:[92,180],kb:[1,0],eb:[0,1]},B:{h:[98,120],t:22,hand:[140,138]},
  back:()=>Rc(22,12,10,170,'e2',3)+Ci(34,22,5,'e2'),
  front:J=>Ln([34,22],J.hand,'cb')+Rc(J.hand[0]-3.5,J.hand[1]-3.5,7,7,'ac',2)},
+{id:'pecdeck',name:'Pec Deck / Reverse Fly',sec:'str',equip:'Pec deck / rear-delt machine',muscles:'Chest · rear shoulders · upper back',type:'sets',sets:2,reps:'10–12',unit:'reps',rest:60,w:20,min:3,met:3.5,period:2800,
+ cues:['Set the seat and handles at chest height; choose chest-fly or reverse-fly orientation as labeled.','Keep a soft elbow bend and bring the arms through a comfortable arc without forcing the shoulder back.','Return slowly and keep your torso against the pad.'],
+ mistake:'Using momentum or allowing the elbows to drift behind the body into a painful stretch.',
+ A:{h:[72,146],t:-38,hand:[42,97],hand2:[91,97],foot:[116,180],kb:[1,0],eb:[-.3,.4],eb2:[.4,.4]},B:{hand:[69,96],hand2:[76,96]},
+ back:J=>backPad(J,9,9)+seatAt(J,22)+Ln([70,53],[70,92],'e1',5)+Ln([70,55],[96,55],'e1',5),
+ front:J=>Ln([75,60],J.hand,'e3',4)+Ln([75,60],J.hand2,'cb',3)},
+{id:'legext',name:'Leg Extension Machine',sec:'str',equip:'Leg extension machine',muscles:'Quadriceps',type:'sets',sets:2,reps:'10–12',unit:'reps',rest:60,w:20,min:3,met:3.5,period:2600,
+ cues:['Align your knee with the machine pivot and set the shin pad just above your ankles.','Extend your knees smoothly without snapping them straight; pause briefly.','Lower the weight under control through a comfortable range.'],
+ mistake:'Kicking the weight or using a load that causes knee pain.',
+ A:{h:[72,146],t:-38,hand:[55,132],foot:[118,125],kb:[-.4,-1],eb:[0,1]},B:{foot:[145,112],toe:[1,0]},
+ back:J=>backPad(J,9,9)+seatAt(J,22)+Ln([66,157],[124,157],'e1',6)+Rc(113,131,18,8,'e2',3),
+ front:J=>Rc(J.ank[0]-7,J.ank[1]-4,14,8,'ac',3)},
+{id:'legcurl',name:'Seated Leg Curl Machine',sec:'str',equip:'Seated leg curl machine',muscles:'Hamstrings',type:'sets',sets:2,reps:'10–12',unit:'reps',rest:60,w:25,min:3,met:3.5,period:2600,
+ cues:['Align your knees with the machine pivot and secure the thigh and ankle pads as labeled.','Curl your heels down and back without lifting your hips.','Return slowly until your legs are comfortably extended.'],
+ mistake:'Lifting your hips or letting the weight stack drop.',
+ A:{h:[72,146],t:-38,hand:[55,132],foot:[128,126],kb:[-.4,-1],eb:[0,1]},B:{foot:[110,155],kb:[1,0]},
+ back:J=>backPad(J,9,9)+seatAt(J,22)+Rc(113,126,18,8,'e2',3)+Ln([66,157],[124,157],'e1',6),
+ front:J=>Rc(J.ank[0]-7,J.ank[1]-4,14,8,'ac',3)},
+{id:'assist',name:'Assisted Pull-up / Dip',sec:'str',equip:'Assisted pull-up / dip machine',muscles:'Lats · biceps · chest · triceps',type:'sets',sets:2,reps:'8–10',unit:'reps',rest:75,w:70,min:4,met:3.5,period:2800,
+ cues:['Choose assistance before mounting; follow the machine label for safe entry and exit.','Hold the handles, keep your body controlled on the platform, and pull or press through a comfortable range.','Return slowly without dropping onto the moving platform.'],
+ mistake:'Stepping onto a moving platform or using too little assistance to keep the motion controlled.',
+ A:{h:[100,112],t:0,handRel:[0,-46],foot:[102,177],foot2:[94,177],kb:[1,0],eb:[0,1]},B:{handRel:[0,-6],t:4},
+ back:()=>Ln([58,18],[58,181],'e1',6)+Ln([58,25],[144,25],'e1',5)+Rc(88,145,30,7,'e2',3)+Ln([92,149],[92,177],'cb',2)+Ln([118,149],[118,177],'cb',2),
+ front:J=>Ln([91,148],[119,148],'pad',6)},
+{id:'smith',name:'Smith Machine Squat',sec:'str',equip:'Smith machine',muscles:'Quads · glutes · core',type:'sets',sets:2,reps:'8–10',unit:'reps',rest:90,w:25,lower:true,min:4,met:5,period:2800,
+ cues:['Set safety stops and confirm hook direction before loading; ask staff to demonstrate first use.','Unrack with feet stable, lower to a comfortable squat depth, and keep knees tracking with toes.','Stand smoothly and re-rack the bar securely before stepping away.'],
+ mistake:'Using the machine without learning its hooks/stops or allowing knees to collapse inward.',
+ A:{h:[94,142],t:28,hand:[82,74],hand2:[112,74],foot:[128,180],foot2:[90,180],kb:[1,0],eb:[0,1]},B:{h:[100,110],t:0,hand:[82,56],hand2:[112,56],foot:[128,180],foot2:[90,180]},
+ back:()=>Ln([54,20],[54,182],'e1',6)+Ln([146,20],[146,182],'e1',6)+Ln([54,58],[146,58],'e1',5)+Ln([54,174],[146,174],'e1',4),
+ front:J=>Ln([70,62],[124,62],'acs',5)},
+{id:'hipabd',name:'Hip Abductor Machine',sec:'str',equip:'Hip abductor machine',muscles:'Outer hips · gluteus medius',type:'sets',sets:2,reps:'12–15',unit:'reps',rest:60,w:30,min:3,met:3.5,period:2600,
+ cues:['Sit supported with pads against the outer thighs and select a comfortable start width.','Press your knees outward smoothly without rocking the torso.','Return slowly and do not bounce at the end range.'],
+ mistake:'Using momentum or forcing the legs into a painful range.',
+ A:{h:[72,146],t:-38,hand:[55,132],foot:[126,162],foot2:[121,165],kb:[-.4,-1],kb2:[-.4,-1],eb:[0,1]},B:{foot:[145,172],foot2:[106,172],kb:[1,0],kb2:[1,0]},
+ back:J=>backPad(J,9,9)+seatAt(J,24)+Ln([111,139],[111,169],'pad',7),
+ front:J=>Ln([107,141],[107,160],'e3',4)},
+{id:'hipadd',name:'Hip Adductor Machine',sec:'str',equip:'Hip adductor machine',muscles:'Inner thighs · adductors',type:'sets',sets:2,reps:'12–15',unit:'reps',rest:60,w:30,min:3,met:3.5,period:2600,
+ cues:['Sit supported with pads against the inner thighs and choose a comfortable starting width.','Bring your knees inward smoothly while keeping your back against the pad.','Let the weight return slowly; do not force a deep stretch.'],
+ mistake:'Letting the weight pull your legs open quickly or forcing a painful stretch.',
+ A:{h:[72,146],t:-38,hand:[55,132],foot:[145,172],foot2:[106,172],kb:[1,0],kb2:[1,0],eb:[0,1]},B:{foot:[126,162],foot2:[121,165],kb:[-.4,-1],kb2:[-.4,-1]},
+ back:J=>backPad(J,9,9)+seatAt(J,24)+Ln([111,139],[111,169],'pad',7),
+ front:J=>Ln([107,141],[107,160],'e3',4)},
+{id:'calfraise',name:'Calf Raise Machine',sec:'str',equip:'Calf raise machine',muscles:'Calves',type:'sets',sets:2,reps:'12–15',unit:'reps',rest:60,w:30,min:3,met:3.5,period:2200,
+ cues:['Adjust the seat or shoulder pad and foot platform as labeled; confirm the safety release.','Rise onto the balls of your feet without bouncing.','Lower your heels under control through a comfortable range.'],
+ mistake:'Bouncing at the bottom or loading the machine before understanding its release.',
+ A:{h:[100,110],t:0,foot:[103,180],foot2:[97,180],kb:[1,0]},B:{foot:[103,170],foot2:[97,170],kb:[1,0]},
+ back:()=>Ln([134,28],[134,174],'e1',5)+seatAt({hip:[100,110]},24)+Ln([130,128],[164,128],'pad',7),
+ front:J=>Rc(J.ank[0]-4,J.ank[1]-4,8,7,'ac',2)},
+{id:'abcrunch',name:'Abdominal Crunch Machine',sec:'str',equip:'Abdominal crunch machine',muscles:'Abdominals',type:'sets',sets:2,reps:'10–15',unit:'reps',rest:60,w:20,min:3,met:3.5,period:2600,
+ cues:['Adjust the seat and pads so the pivot follows your body; begin with a light setting.','Brace gently and curl your ribs toward your pelvis through a small, pain-free range.','Return slowly without pulling on your neck or arms.'],
+ mistake:'Jerking the torso or pulling the handles with the arms.',
+ A:{h:[72,146],t:-38,hand:[55,132],foot:[118,180],kb:[1,0],eb:[0,1]},B:{h:[84,150],t:-18,hand:[70,127]},
+ back:J=>backPad(J,9,9)+seatAt(J,22)+Ln([72,96],[90,127],'e1',5),
+ front:J=>Ln([80,92],J.hand,'pad',7)},
+{id:'backext',name:'Back Extension Machine',sec:'str',equip:'Back extension / Roman chair',muscles:'Spinal erectors · glutes · hamstrings',type:'sets',sets:2,reps:'10–12',unit:'reps',rest:60,w:0,min:3,met:3.5,period:2800,
+ cues:['Set the hip pad and pivot to your body; ask staff to check your setup if unfamiliar.','Keep your spine neutral and hinge at the hips through a modest range.','Return to upright without leaning backward past neutral.'],
+ mistake:'Overextending the back or forcing a large range.',
+ A:{h:[92,116],t:58,hand:[119,115],foot:[158,180],kb:[1,0],eb:[0,1]},B:{h:[100,110],t:20,hand:[133,92]},
+ back:J=>Ln([62,114],[130,114],'pad',9)+Ln([62,114],[62,161],'e1',5)+Ln([130,114],[130,161],'e1',5),
+ front:J=>Ln([66,114],[145,114],'e1',4)},
+{id:'hipthrust',name:'Glute Drive / Hip Thrust Machine',sec:'str',equip:'Glute drive machine or bench',muscles:'Glutes · hamstrings',type:'sets',sets:2,reps:'10–12',unit:'reps',rest:75,w:30,lower:true,min:4,met:5,period:2800,
+ cues:['Position the hip pad across your hips and secure the belt; set feet so shins are near vertical at the top.','Drive through your whole foot and extend your hips without arching your lower back.','Lower the load slowly and use the machine release to exit.'],
+ mistake:'Overarching your lower back or placing the pad on your abdomen.',
+ A:{h:[60,154],t:90,hand:[112,154],foot:[158,180],kb:[0,-1],eb:[0,1]},B:{h:[70,133],t:52,hand:[118,142],foot:[158,180],kb:[0,-1],eb:[0,1]},
+ back:()=>Ln([22,178],[176,178],'e1',4)+Ln([66,138],[66,176],'pad',9)+Rc(96,148,34,8,'e2',3),
+ front:J=>Ln([J.hip[0]-9,J.hip[1]+4],[J.hip[0]+16,J.hip[1]+4],'pad',7)},
+{id:'cablefly',name:'Cable Chest Fly',sec:'str',equip:'Cable station + handles',muscles:'Chest · front shoulders',type:'sets',sets:2,reps:'10–12',unit:'reps',rest:60,w:10,min:3,met:3.5,period:2600,
+ cues:['Set both pulleys to the same height and attach matching handles.','Stand in a stable stance with soft elbows; bring hands together in front of your chest without forcing a stretch.','Return slowly while keeping your shoulders comfortable.'],
+ mistake:'Overstretching the shoulders or turning the fly into a press.',
+ A:{h:[100,110],t:0,hand:[54,70],hand2:[146,70],foot:[104,180],foot2:[96,180],kb:[1,0],eb:[0,1]},B:{hand:[92,92],hand2:[108,92]},
+ back:()=>Ln([30,25],[30,174],'e1',5)+Ln([170,25],[170,174],'e1',5)+Ln([30,42],[170,42],'e1',4)+Ci(30,48,5,'e2')+Ci(170,48,5,'e2'),
+ front:J=>Ln([30,48],J.hand,'cb',2)+Ln([170,48],J.hand2,'cb',2)},
+{id:'finwalk',name:'Brisk Treadmill Finish',sec:'fin',equip:'Treadmill',muscles:'Cardiovascular fitness · legs',type:'time',dur:240,min:4,met:4.5,rx:'4 min brisk, controlled pace',period:1150,
+ cues:['Start at an easy walking speed and build gradually for 4 minutes.','Keep your stride natural and posture upright; use the safety clip if available.','Finish at an easy pace if you feel dizzy, unusually short of breath, or unsteady.'],
+ mistake:'Chasing speed or incline when your form or breathing is no longer controlled.',
+ fn:p=>{const th=2*Math.PI*p,ft=ph=>{const s=Math.sin(ph);return[100-20*Math.cos(ph),180-(s>0?7*s:0)]},a=24*Math.cos(th)*D2R;
+   return{h:[100,110-1.5*Math.abs(Math.sin(th))],t:5,handRel:[Math.sin(a)*40,Math.cos(a)*40],handRel2:[Math.sin(-a)*40,Math.cos(-a)*40],foot:ft(th),foot2:ft(th+Math.PI),kb:[1,0],eb:[-1,.3]}},
+ back:(J,p)=>Rc(44,181,124,8,'e2',4)+`<line x1="50" y1="185" x2="162" y2="185" class="belt" style="stroke-dashoffset:${n1(p*22)}"/>`+Ln([162,184],[150,96],'e1',5)+Rc(134,84,32,12,'e2',3)+Rc(139,87.5,15,5,'ac',1)},
+{id:'finrow',name:'Easy Rowing Finish',sec:'fin',equip:'Rowing machine (erg)',muscles:'Back · legs · arms · cardiovascular fitness',type:'time',dur:240,min:4,met:4.8,rx:'4 min smooth, steady strokes',period:2600,
+ cues:['Set the foot straps snugly and sit tall with a relaxed grip.','Push with your legs first, then swing back slightly and draw the handle to your lower ribs.','Recover in reverse order: arms forward, torso forward, then bend your knees.'],
+ mistake:'Rushing the slide or pulling with your arms before your legs drive.',
+ A:{h:[102,158],t:25,hand:[158,130],foot:[148,166],kb:[0,-1],eb:[0,1]},B:{h:[78,158],t:-22,hand:[80,130],eb:[-1,.3]},
+ back:J=>Ln([26,172],[180,172],'e1',4)+Ln([38,172],[38,182],'e1',3)+Ln([168,172],[168,182],'e1',3)+Ci(172,146,15,'e2')+Ci(172,146,4,'e1')+Ln([152,146],[156,174],'e1',5)+Rc(J.hip[0]-13,J.hip[1]+4,26,7,'e2',3),
+ front:J=>Ln([164,140],J.hand,'cb')+Rc(J.hand[0]-2,J.hand[1]-6,4,12,'ac',2)},
 /* ---- cool-down ---- */
 {id:'quad',name:'Standing Quad Stretch',sec:'cool',equip:'Wall for balance',muscles:'Quads · hip flexors',type:'time',dur:70,min:1.17,met:2.3,rx:'30 s per leg',period:5200,
  cues:['Hold a wall with one hand.','Pull your heel toward your glutes and keep your knees together.','Tuck your hips slightly to feel it more. Switch legs halfway.'],
@@ -458,16 +580,84 @@ const EX=[
  back:()=>MAT}
 ];
 const EXI={};EX.forEach((e,i)=>{EXI[e.id]=e;e.i=i});
+const DEFAULT_PLAN_IDS=['tread','armc','legs','goblet','chest','lat','rdl','plank','curl','finwalk','quad','ham','child'];
+DB.plan=Object.assign({duration:60,selected:DEFAULT_PLAN_IDS.slice()},DB.plan||{});
+DB.plan.duration=[30,45,60].includes(+DB.plan.duration)?+DB.plan.duration:60;
+DB.plan.selected=Array.isArray(DB.plan.selected)?[...new Set(DB.plan.selected.filter(id=>EXI[id]))]:DEFAULT_PLAN_IDS.slice();
+
+const MACHINES=[
+ {id:'chest-press',name:'Chest press machine',category:'Upper body',exercise:'chest',aliases:'horizontal press seated press',setup:'Adjust the seat so the handles begin around mid-chest. Keep your back and head against the pad.',mistake:'Shrugging, bouncing the weight stack, or forcing a painful shoulder range.'},
+ {id:'shoulder-press',name:'Shoulder press machine',category:'Upper body',exercise:'spress',aliases:'overhead press',setup:'Set the seat so handles start near shoulder height. Keep your back supported and wrists stacked over elbows.',mistake:'Overarching the lower back or locking the elbows hard.'},
+ {id:'pec-deck',name:'Pec deck / rear-delt fly',category:'Upper body',exercise:'pecdeck',aliases:'chest fly reverse fly',setup:'Set the seat so handles are near chest height. For reverse fly, face the pad and use the rear-delt handle position if the machine allows it.',mistake:'Stretching too far behind the body or using momentum.'},
+ {id:'lat-pulldown',name:'Lat pulldown',category:'Upper body',exercise:'lat',aliases:'pulldown',setup:'Adjust the thigh pad snugly with feet planted. Choose a comfortable bar grip and sit tall.',mistake:'Pulling behind the neck, swinging, or leaning far back.'},
+ {id:'seated-row',name:'Seated cable row',category:'Upper body',exercise:'crow',aliases:'low row cable row',setup:'Set feet securely on the platform and sit tall with knees soft. Choose a handle that lets wrists stay neutral.',mistake:'Rocking your torso to move the load or rounding your lower back.'},
+ {id:'assisted-pullup',name:'Assisted pull-up / dip',category:'Upper body',exercise:'assist',aliases:'assisted dip chin-up',setup:'Select assistance before stepping onto the platform. Follow the machine label for safe entry and exit.',mistake:'Stepping onto a moving platform or dropping quickly at the bottom.'},
+ {id:'cable-station',name:'Cable station / functional trainer',category:'Cable',aliases:'cable crossover pulley',setup:'Set each pulley to the height specified for your exercise; attach the matching handle and check the pin is fully seated.',mistake:'Standing in the cable path, using a damaged attachment, or letting the weight stack slam.'},
+ {id:'leg-press',name:'Leg press',category:'Lower body',exercise:'lpress',aliases:'45 degree leg press',setup:'Adjust the seat/backrest so your pelvis stays against the pad. Place feet about hip-width on the platform and confirm how the safety handles release.',mistake:'Letting the lower back roll off the pad, knees collapsing inward, or locking knees.'},
+ {id:'leg-extension',name:'Leg extension',category:'Lower body',exercise:'legext',aliases:'quad extension',setup:'Align your knee with the machine pivot. Position the shin pad just above the ankles and set a comfortable range.',mistake:'Kicking the weight or using a load that causes knee pain.'},
+ {id:'leg-curl',name:'Seated / lying leg curl',category:'Lower body',exercise:'legcurl',aliases:'hamstring curl',setup:'Align the knee with the pivot and adjust the thigh/ankle pads so they are secure without pinching.',mistake:'Lifting the hips, shortening the range, or letting the stack drop.'},
+ {id:'hip-abductor',name:'Hip abductor',category:'Lower body',exercise:'hipabd',aliases:'outer thigh',setup:'Sit with your back supported and pads against the outer thighs. Start with a comfortable range setting.',mistake:'Bouncing at the widest point or leaning to move the load.'},
+ {id:'hip-adductor',name:'Hip adductor',category:'Lower body',exercise:'hipadd',aliases:'inner thigh',setup:'Sit with your back supported and pads against the inner thighs. Set the start position so the stretch is comfortable.',mistake:'Letting the weight pull your legs open quickly or forcing a deep stretch.'},
+ {id:'calf-raise',name:'Calf raise machine',category:'Lower body',exercise:'calfraise',aliases:'standing calf seated calf',setup:'Use the machine-specific shoulder or seat pad. Secure the foot platform and use the safety release as labeled.',mistake:'Bouncing or loading the machine before understanding its release.'},
+ {id:'smith-machine',name:'Smith machine',category:'Free weights',exercise:'smith',aliases:'smith squat bench press',setup:'Set the hooks and safety stops before loading. Confirm the bar’s rotation direction and ask staff to show first-time setup.',mistake:'Unfamiliarity with hooks/stops, safety catches set too low, or lifting alone beyond control.'},
+ {id:'dumbbells',name:'Dumbbells and benches',category:'Free weights',aliases:'free weights incline flat bench',setup:'Choose a clear area, check the bench is locked, and pick a load you can control through the full range.',mistake:'Leaving weights on the floor or reaching for a load you cannot safely return.'},
+ {id:'ab-crunch',name:'Abdominal crunch machine',category:'Core',exercise:'abcrunch',aliases:'abdominal machine',setup:'Adjust the seat and pads so the pivot follows your body comfortably; start with a light load.',mistake:'Pulling with the arms, jerking the neck, or forcing spinal flexion.'},
+ {id:'back-extension',name:'Back extension machine',category:'Core',exercise:'backext',aliases:'lower back extension',setup:'Adjust the pivot/pad to your body and set the range stop if provided. Keep spine neutral.',mistake:'Hyperextending the back or forcing a large range.'},
+ {id:'treadmill',name:'Treadmill',category:'Cardio',exercise:'tread',aliases:'walking running incline',setup:'Stand on the side rails to start, attach the safety clip if available, then begin at a slow speed and step on carefully.',mistake:'Jumping onto a moving belt or using rails to support your body for the whole workout.'},
+ {id:'elliptical',name:'Elliptical trainer',category:'Cardio',aliases:'cross trainer',setup:'Hold the stationary handles while stepping on; start at low resistance and build gradually.',mistake:'Leaning heavily on the handles or moving faster than you can control.'},
+ {id:'exercise-bike',name:'Upright / recumbent bike',category:'Cardio',aliases:'stationary bicycle cycle',setup:'Adjust seat so the knee remains slightly bent at the bottom of the pedal stroke. Set the backrest on recumbent models.',mistake:'Seat too close/far, rocking hips, or starting at a high resistance.'},
+ {id:'stepmill',name:'Stair climber / stepmill',category:'Cardio',aliases:'stair stepper stairmaster',setup:'Start at the lowest comfortable speed and step fully onto each stair. Hold rails for balance while mounting.',mistake:'Skipping steps or leaning bodyweight onto the rails.'},
+ {id:'rowing-erg',name:'Indoor rowing machine',category:'Cardio',exercise:'row',aliases:'erg rower',setup:'Set foot straps across the widest part of the foot and choose low resistance while learning the stroke.',mistake:'Pulling with arms first, rounding the back, or setting resistance too high.'},
+ {id:'glute-drive',name:'Glute drive / hip thrust machine',category:'Lower body',exercise:'hipthrust',aliases:'hip thrust glute bridge',setup:'Position the pad across the hips, secure the belt if present, and set feet so shins are near vertical at the top.',mistake:'Overarching the lower back or positioning the pad on the abdomen.'},
+ {id:'chest-supported-row',name:'Chest-supported row',category:'Upper body',aliases:'iso lateral row',setup:'Adjust the chest pad and seat so you can reach handles without rounding. Keep your chest in contact with the pad.',mistake:'Lifting the chest off the pad or shrugging.'},
+ {id:'cable-fly',name:'Cable chest fly',category:'Cable',exercise:'cablefly',aliases:'cable crossover fly',setup:'Set both pulleys evenly at chest height, attach matching handles, and stand in a stable staggered stance.',mistake:'Overstretching the shoulders or turning the fly into a press.'},
+ {id:'triceps-pressdown',name:'Cable triceps pressdown',category:'Cable',exercise:'tri',aliases:'rope pushdown',setup:'Set the pulley high and check the rope/bar is securely attached. Stand close enough to keep elbows by your sides.',mistake:'Elbows drifting forward or leaning bodyweight onto the cable.'},
+ {id:'biceps-cable',name:'Cable biceps curl',category:'Cable',exercise:'curl',aliases:'low pulley curl',setup:'Set the pulley low, attach a handle, and stand with feet stable and elbows near your sides.',mistake:'Swinging the torso or letting elbows travel forward.'},
+ {id:'arc-trainer',name:'ARC trainer',category:'Cardio',aliases:'arc elliptical',muscles:'Cardiovascular system · legs · glutes',setup:'Step on while holding the stationary handles. Start at a low resistance and stride setting, then adjust gradually.',mistake:'Leaning heavily on the handles or forcing a stride length that feels uncomfortable.'},
+ {id:'recumbent-stepper',name:'Recumbent stepper',category:'Cardio',aliases:'seated stepper',muscles:'Cardiovascular system · legs',setup:'Adjust the seat/back support so hips are comfortable and feet stay centered on the pedals. Start at low resistance.',mistake:'Overreaching the pedals, locking the knees, or stepping off while pedals are moving.'},
+ {id:'air-bike',name:'Air bike',category:'Cardio',aliases:'fan bike assault bike',muscles:'Cardiovascular system · arms · legs',setup:'Adjust the seat so there is a slight knee bend at the bottom of the pedal stroke. Begin with an easy pace.',mistake:'Starting with an all-out sprint or rocking the torso excessively.'},
+ {id:'spin-bike',name:'Indoor cycling / spin bike',category:'Cardio',aliases:'cycle studio bike',muscles:'Cardiovascular system · legs',setup:'Adjust seat height and fore/aft position using the bike labels; secure feet in the pedals before adding resistance.',mistake:'Standing or sprinting before the bike fit and pedal straps are secure.'},
+ {id:'express-circuit',name:'30-minute express circuit',category:'Circuit',aliases:'express circuit circuit stations',muscles:'Full body · cardiovascular system',setup:'Follow the station order and timing lights/instructions. Set each seat and pad before starting the timed interval.',mistake:'Rushing adjustments between stations or using a load that prevents controlled repetitions.'},
+ {id:'functional-trainer',name:'Functional training station',category:'Functional',aliases:'fitbench pulley trainer',muscles:'Varies by movement · full body',setup:'Check the bench or station is locked, set the cable/attachment at the correct height, and clear the movement area.',mistake:'Using an unlocked bench, standing in the cable path, or swinging uncontrolled weights.'},
+ {id:'trx',name:'Suspension trainer',category:'Functional',aliases:'trx straps bodyweight straps',muscles:'Varies by movement · core stabilizers',setup:'Use only an approved anchor and inspect straps/handles before loading them. Adjust strap length and body angle to make the exercise easier.',mistake:'Using an unverified anchor or choosing a body angle too difficult to control.'},
+ {id:'battle-ropes',name:'Battle ropes',category:'Functional',aliases:'conditioning ropes',muscles:'Shoulders · arms · core · cardiovascular system',setup:'Check the anchor and keep the rope path clear. Use a stable stance with soft knees and a neutral spine.',mistake:'Rounding the back, locking the knees, or continuing after form breaks down.'},
+ {id:'resistance-bands',name:'Resistance bands',category:'Functional',aliases:'strength bands loop bands',muscles:'Varies by movement',setup:'Inspect the band for tears and secure it to a stable anchor. Choose a resistance that permits controlled motion.',mistake:'Stretching a damaged band toward the face or releasing tension suddenly.'},
+ {id:'medicine-balls',name:'Medicine balls',category:'Functional',aliases:'med ball slam ball',muscles:'Varies by movement · core',setup:'Choose a ball and exercise that match your ability; confirm the ball and floor are suitable for throws or slams.',mistake:'Throwing toward people, using a rebound ball for slams, or twisting under uncontrolled load.'},
+ {id:'bosu',name:'Balance trainer',category:'Functional',aliases:'bosu balance dome',muscles:'Balance · ankles · legs · core',setup:'Place the trainer on a non-slip floor and begin beside a stable support. Start with two feet and an easy task.',mistake:'Adding heavy weights or advanced movements before balance is reliable.'},
+ {id:'kettlebells',name:'Kettlebells',category:'Free weights',aliases:'kettle bell',muscles:'Varies by movement · hips · grip',setup:'Inspect the handle and choose a light bell to learn the movement. Leave clear space around your swing path.',mistake:'Swinging near other people or using the low back instead of a controlled hip hinge.'},
+ {id:'barbells',name:'Barbells and weight plates',category:'Free weights',aliases:'bar plate loaded weights',muscles:'Varies by movement',setup:'Use collars when appropriate, load both sides evenly, and confirm the rack/safeties are set before lifting.',mistake:'Unbalanced loading, leaving plates on the bar, or lifting without suitable safeties/spotter.'},
+ {id:'adjustable-benches',name:'Adjustable benches',category:'Free weights',aliases:'flat incline decline bench',muscles:'Support equipment · varies by exercise',setup:'Check the bench feet are stable and the back/seat adjustment pins are fully engaged before lying down.',mistake:'Changing the angle while loaded or using a bench that is not locked.'}
+];
+let EX_QUERY='',EX_GOAL='all',EX_EQUIP='all',MACHINE_QUERY='',MACHINE_CATEGORY='all',MACHINE_ACTIVE='',SCAN_STREAM=null,SCAN_FRAME=0,SCAN_BUSY=false;
+
+const planExercises=()=>DB.plan.selected.map(id=>EXI[id]).filter(Boolean).sort((a,b)=>a.i-b.i);
+const planTimeParts=()=>{
+  const list=planExercises();
+  const work=list.reduce((s,e)=>s+e.min,0);
+  const rest=list.reduce((s,e)=>s+(e.type==='sets'?Math.max(0,e.sets-1)*(e.rest||0)/60:0),0);
+  const transitions=Math.max(0,list.length-1)*0.5;
+  const bySec={};for(const e of list)bySec[e.sec]=(bySec[e.sec]||0)+e.min;
+  return{list,work,rest,transitions,total:work+rest+transitions,bySec};
+};
+const planReady=()=>{
+  const stages=new Set(planExercises().map(e=>e.sec));
+  return stages.has('warm')&&stages.has('mob')&&stages.has('str')&&stages.has('cool')&&planTimeParts().total<=DB.plan.duration;
+};
 
 /* ================= calories & profile math ================= */
 const kg=()=>(+DB.profile.lb||163)*0.4536;
 const cm=()=>((+DB.profile.ft||5)*12+(+DB.profile.inch||0))*2.54;
 const kcalMin=met=>met*3.5*kg()/200;            // ACE / Compendium formula
 const exKcal=e=>e.min*kcalMin(e.met);
-const planMin=()=>EX.reduce((s,e)=>s+e.min,0);
-const planKcal=()=>Math.round(EX.reduce((s,e)=>s+exKcal(e),0));
-const secMin=k=>EX.filter(e=>e.sec===k).reduce((s,e)=>s+e.min,0);
-const secKcal=k=>Math.round(EX.filter(e=>e.sec===k).reduce((s,e)=>s+exKcal(e),0));
+const planMin=()=>planTimeParts().total;
+const planKcal=()=>Math.round(planExercises().reduce((s,e)=>s+exKcal(e),0));
+const secMin=k=>planExercises().filter(e=>e.sec===k).reduce((s,e)=>s+e.min,0);
+const secKcal=k=>Math.round(planExercises().filter(e=>e.sec===k).reduce((s,e)=>s+exKcal(e),0));
+function normalizePlan(){
+  const p=DB.plan&&typeof DB.plan==='object'?DB.plan:{};
+  DB.plan={duration:[30,45,60].includes(+p.duration)?+p.duration:60,
+    selected:Array.isArray(p.selected)?[...new Set(p.selected.filter(id=>EXI[id]))]:DEFAULT_PLAN_IDS.slice()};
+}
 function bmi(){const m=cm()/100;return kg()/(m*m)}
 function bmiCat(b){return b<18.5?'Underweight':b<25?'Healthy range':b<30?'Overweight range':'Obese range'}
 function bmr(){const p=DB.profile;if(!p.age||!p.sex)return null;const base=10*kg()+6.25*cm()-5*(+p.age);return Math.round(p.sex==='m'?base+5:base-161)}
@@ -494,6 +684,7 @@ const IC={
  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></svg>',
  chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M5 15l4-5 4 3 6-7"/></svg>',
  flag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg>',
+ machines:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6M7 6v12M17 6v12M20 9v6M7 12h10"/></svg>',
  user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
  down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
@@ -515,11 +706,13 @@ const thumbSVG=e=>`<svg class="thumb" viewBox="0 0 200 200" aria-hidden="true">$
 
 /* ================= routing ================= */
 let VIEW='today';
-const TABS=[['today','Workout','home'],['progress','Progress','chart'],['goals','Goals','flag'],['profile','Profile','user']];
-function go(v){VIEW=v;render();window.scrollTo(0,0)}
+const TABS=[['today','Workout','home'],['machines','Machines','machines'],['progress','Progress','chart'],['goals','Goals','flag'],['profile','Profile','user']];
+function go(v){if(VIEW==='machines'&&v!=='machines')stopScan();VIEW=v;render();window.scrollTo(0,0)}
 function render(){
   $('#tabs').innerHTML=TABS.map(([k,l,i])=>`<button class="${VIEW===k?'on':''}" onclick="go('${k}')" aria-label="${l}">${IC[i]}${l}</button>`).join('');
-  $('#view').innerHTML=({today:vToday,progress:vProgress,goals:vGoals,profile:vProfile})[VIEW]();
+  $('#view').innerHTML=({today:vToday,machines:vMachines,progress:vProgress,goals:vGoals,profile:vProfile})[VIEW]();
+  if(VIEW==='machines')renderMachines();
+  if(VIEW==='today')filterExercises();
   mountAnims($('#view'));bindCharts();
   const rb=$('#resumeBtn');if(ACTIVE&&!WO_OPEN){rb.classList.remove('hidden');rb.innerHTML=`${IC.play} Resume workout · <span id="rbT">${fmtT((Date.now()-ACTIVE.start)/1000)}</span>`}else rb.classList.add('hidden');
 }
@@ -527,6 +720,48 @@ function render(){
 /* ================= TODAY ================= */
 function greet(){const h=new Date().getHours();return h<12?'Good morning':h<18?'Good afternoon':'Good evening'}
 function rxStr(e){return e.type==='time'?(e.rx||fmtT(e.dur)):`${e.sets} × ${e.reps}${e.unit==='sec'?' sec':e.unit==='reps/side'?'/side':''}`}
+function selectPlanDuration(v){DB.plan.duration=+v;save();render()}
+function togglePlan(id,checked){
+  if(checked){const e=EXI[id];if(e.sec==='fin')DB.plan.selected=DB.plan.selected.filter(x=>EXI[x].sec!=='fin');if(!DB.plan.selected.includes(id))DB.plan.selected.push(id)}
+  else DB.plan.selected=DB.plan.selected.filter(x=>x!==id);
+  save();render();
+}
+function filterExercises(){
+  const q=EX_QUERY.trim().toLowerCase();
+  document.querySelectorAll('[data-ex-search]').forEach(el=>{
+    const e=EXI[el.dataset.exSearch];
+    const text=`${e.name} ${e.equip} ${e.muscles} ${SEC[e.sec].name}`.toLowerCase();
+    const muscles=e.muscles.toLowerCase(),equip=e.equip.toLowerCase();
+    const goalMatch=EX_GOAL==='all'||(EX_GOAL==='upper'&&/chest|shoulder|back|lat|bicep|tricep|arm/.test(muscles))
+      ||(EX_GOAL==='lower'&&/quad|glute|hamstring|hip|leg|calf/.test(muscles))
+      ||(EX_GOAL==='core'&&/core|abdom|spine|oblique/.test(muscles))
+      ||(EX_GOAL==='cardio'&&(e.sec==='warm'||e.sec==='fin'||/heart|cardiovascular/.test(muscles)));
+    const equipMatch=EX_EQUIP==='all'||(EX_EQUIP==='machine'&&/machine|treadmill|rowing machine/.test(equip))
+      ||(EX_EQUIP==='cable'&&equip.includes('cable'))||(EX_EQUIP==='free'&&/dumbbell|barbell/.test(equip))
+      ||(EX_EQUIP==='bodyweight'&&/no equipment|floor|mat|wall/.test(equip))
+      ||(EX_EQUIP==='cardio'&&/treadmill|rowing machine/.test(equip));
+    el.classList.toggle('hidden',!!q&&!text.includes(q)||!goalMatch||!equipMatch);
+  });
+  document.querySelectorAll('[data-ex-empty]').forEach(el=>{
+    const group=el.dataset.exEmpty;
+    el.classList.toggle('hidden',!q||[...document.querySelectorAll(`[data-ex-search]`)].some(item=>!item.classList.contains('hidden')&&EXI[item.dataset.exSearch].sec===group));
+  });
+}
+function planCard(){
+  const p=planTimeParts(),free=DB.plan.duration-p.total,secs=['warm','mob','str','fin','cool'];
+  const stages=secs.map(k=>[k,Math.round(p.bySec[k]||0)]).filter(x=>x[1]||x[0]==='fin');
+  const ready=planReady();
+  return `<section class="card planner" id="planner">
+    <div class="row"><div><div class="eyebrow" style="color:var(--ac)">Your guided session</div><h2 style="margin-top:3px">Build your workout</h2></div><label class="small muted">Available time<select class="field" style="margin-top:4px" onchange="selectPlanDuration(this.value)">${[30,45,60].map(v=>`<option value="${v}" ${DB.plan.duration===v?'selected':''}>${v} min</option>`).join('')}</select></label></div>
+    <p class="small muted">Choose a warm-up, the strength work you want, an optional finisher, and a cooldown. Time estimates include set rest and equipment transitions.</p>
+    <div class="plan-grid"><div class="plan-stat"><b>${Math.max(0,Math.round(free))} min</b><span>${free<0?'over budget':'remaining'}</span></div>
+      <div class="plan-stat"><b>${Math.round(p.work)} min</b><span>exercise time</span></div>
+      <div class="plan-stat"><b>${Math.round(p.rest+p.transitions)} min</b><span>rest + transitions</span></div></div>
+    <div class="chips">${stages.map(([k,m])=>`<span class="chip" style="border-left:3px solid ${SEC[k].c}">${SEC[k].name}: ${m} min</span>`).join('')}</div>
+    <div class="stage-note">${free<0?`Your selection is ${Math.abs(Math.round(free))} minutes over. Remove moves or choose a longer session.`:`${free>0?`${Math.round(free)} minutes are left for hydration, setup and recovery.`:'Your planned moves fill the selected time.'} Keep the workout comfortable; skip the finisher when tired.`}</div>
+    <button class="btn" onclick="startWorkout()" ${ready?'':'disabled style="opacity:.45;cursor:not-allowed"'}>${IC.play} ${ACTIVE?'Resume workout':ready?'Start planned session':'Select warm-up, mobility, strength and cooldown that fit'}</button>
+  </section>`;
+}
 function vToday(){
   const day=DB.sessions.length+1;
   let h=`<header class="top"><div><div class="eyebrow">${greet()}</div><h1>Rebuild</h1></div><button class="avatar" onclick="go('profile')" aria-label="Profile">${IC.user}</button></header>`;
@@ -534,17 +769,21 @@ function vToday(){
   h+=`<section class="hero"><div class="fig">${animSVG('goblet')}</div>
    <div class="eyebrow" style="color:var(--ac)">Day ${day} · Full body</div>
    <h2 style="margin-top:6px">${day===1?'Comeback Session':'Full-Body Session'}</h2>
-   <div class="stats3"><div class="stat"><div class="num">${Math.round(planMin())}</div><div class="lbl">minutes</div></div>
+   <div class="stats3"><div class="stat"><div class="num">${Math.round(planMin())}/${DB.plan.duration}</div><div class="lbl">planned / min</div></div>
    <div class="stat"><div class="num">~${planKcal()}</div><div class="lbl">kcal est.</div></div>
-   <div class="stat"><div class="num">${EX.length}</div><div class="lbl">moves</div></div></div>
-   <button class="btn" onclick="startWorkout()">${IC.play} ${ACTIVE?'Resume workout':'Start workout'}</button>
+   <div class="stat"><div class="num">${planExercises().length}</div><div class="lbl">selected moves</div></div></div>
    <p class="small muted" style="margin:10px 0 0">Goal for today: wake every muscle up, not max out. Use a weight you could lift 15 times, but stop at 10–12.</p></section>`;
+  h+=planCard();
+  h+=`<div class="plan-tools"><input class="field search" id="exerciseSearch" value="${esc(EX_QUERY)}" oninput="EX_QUERY=this.value;filterExercises()" placeholder="Search moves, muscles or equipment" aria-label="Search exercises"><button class="btn2 sm" onclick="EX_QUERY='';$('#exerciseSearch').value='';filterExercises()">Clear</button></div>
+    <div class="plan-filters"><select class="field" aria-label="Filter by training goal" onchange="EX_GOAL=this.value;filterExercises()"><option value="all" ${EX_GOAL==='all'?'selected':''}>All goals</option><option value="upper" ${EX_GOAL==='upper'?'selected':''}>Upper body</option><option value="lower" ${EX_GOAL==='lower'?'selected':''}>Lower body</option><option value="core" ${EX_GOAL==='core'?'selected':''}>Core</option><option value="cardio" ${EX_GOAL==='cardio'?'selected':''}>Warm-up / cardio</option></select>
+    <select class="field" aria-label="Filter by equipment" onchange="EX_EQUIP=this.value;filterExercises()"><option value="all" ${EX_EQUIP==='all'?'selected':''}>All equipment</option><option value="machine" ${EX_EQUIP==='machine'?'selected':''}>Machines</option><option value="cable" ${EX_EQUIP==='cable'?'selected':''}>Cable</option><option value="free" ${EX_EQUIP==='free'?'selected':''}>Free weights</option><option value="bodyweight" ${EX_EQUIP==='bodyweight'?'selected':''}>Bodyweight / mat</option><option value="cardio" ${EX_EQUIP==='cardio'?'selected':''}>Cardio equipment</option></select></div>`;
   for(const k in SEC){const s=SEC[k];
     h+=`<div class="sech"><div class="t"><span class="dot" style="--c:${s.c}"></span><h3>${s.name}</h3></div><div class="m">${Math.round(secMin(k))} min · ~${secKcal(k)} kcal</div></div><div class="secdesc">${s.desc}</div><div class="list">`;
     EX.filter(e=>e.sec===k).forEach(e=>{const l=lastFor(e.id);
-      h+=`<button class="item" onclick="openEx('${e.id}')">${thumbSVG(e)}<div class="rt"><div class="rn">${esc(e.name)}</div><div class="rs">${esc(rxStr(e))} · ${esc(e.equip)}</div></div><div class="rr">${l?`<b>${esc(bestSetStr(e,l))}</b>last time`:e.type==='time'?`<b>${fmtT(e.dur)}</b>timer`:e.w?`<b>~${e.w} lb</b>start`:'<b>BW</b>bodyweight'}</div></button>`});
+      h+=`<div class="library-item" data-ex-search="${e.id}"><label class="plan-item" title="Add ${esc(e.name)} to your session"><input type="checkbox" ${DB.plan.selected.includes(e.id)?'checked':''} onchange="togglePlan('${e.id}',this.checked)" aria-label="Add ${esc(e.name)} to plan"></label><button class="item-open" onclick="openEx('${e.id}')">${thumbSVG(e)}<span class="rt"><span class="rn">${esc(e.name)}</span><span class="rs">${esc(rxStr(e))} · ${esc(e.equip)} · ~${e.min<2?Math.round(e.min*60)+' sec':e.min+' min'}</span></span></button><span class="item rr">${l?`<b>${esc(bestSetStr(e,l))}</b>last time`:e.type==='time'?`<b>${fmtT(e.dur)}</b>timer`:e.w?`<b>~${e.w} lb</b>start`:'<b>BW</b>bodyweight'}</span></div>`});
+    h+=`<p class="empty hidden" data-ex-empty="${k}">No ${esc(s.name.toLowerCase())} moves match that search.</p>`;
     h+='</div>'}
-  h+=`<p class="small muted" style="margin:18px 4px">Tap any move to see the animation, which machine to use, and how to do it. Rest 60–90 s between strength sets. Drink water throughout. Stop if you feel sharp pain (normal soreness is fine).</p>`;
+  h+=`<p class="small muted" style="margin:18px 4px">Tap any move to see its exercise-specific animation, setup, cues, breathing and safety notes. You can also browse the Machines guide for equipment-specific setup tips.</p>`;
   return h;
 }
 
@@ -560,14 +799,229 @@ function openEx(id){const e=EXI[id];const ss=setsFor(id);
   <div><div class="lbl">Est. time</div><div class="num">${e.min<2?Math.round(e.min*60)+' s':Math.round(e.min*10)/10+' min'}</div></div>
   <div><div class="lbl">Est. burn</div><div class="num">~${Math.round(exKcal(e))} kcal</div></div></div>
   ${e.note?`<div class="banner" style="margin:4px 0 10px"><span style="font-size:20px">💡</span><span class="small">${esc(e.note)}</span></div>`:''}
-  <h3 style="margin-top:14px">How to do it</h3><ul class="cues">${e.cues.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>
-  <div class="warn"><b>Avoid:</b> ${esc(e.mistake)}</div>`;
+  <h3 style="margin-top:14px">Set up & starting position</h3><p class="small muted">${esc(e.cues[0])}</p>
+  <h3>Movement</h3><ul class="cues">${e.cues.slice(1).map(c=>`<li>${esc(c)}</li>`).join('')}</ul>
+  <div class="card" style="margin-top:12px"><b>Breathing</b><p class="small muted" style="margin:4px 0 0">${esc(breathingFor(e))}</p></div>
+  <div class="warn"><b>Common mistake / safety:</b> ${esc(e.mistake)} Stop if you feel sharp pain, dizziness or unusual shortness of breath.</div>
+  <div class="row2" style="margin-top:12px"><button class="btn2" onclick="togglePlan('${e.id}',${!DB.plan.selected.includes(e.id)});openEx('${e.id}')">${DB.plan.selected.includes(e.id)?'Remove from plan':'Add to plan'}</button><button class="btn2" onclick="printExercise('${e.id}')">Print instructions</button></div>`;
   if(e.type==='sets'&&ss.length){
     const pts=ss.map(s=>({x:fmtD(s.date),v:e.w===null?topReps(s.items[id]):topW(s.items[id])}));
     h+=`<h3 style="margin-top:18px">Your progress</h3><p class="small muted" style="margin:2px 0 8px">${e.w===null?'Best '+(e.unit==='sec'?'hold (sec)':'reps'):'Heaviest set (lb)'} per workout · best ever: <b style="color:var(--tx)">${esc(bestSetStr(e,{sets:ss.flatMap(s=>s.items[id].sets)}))}</b></p>${pts.length>1?chartSVG('ex-'+id,pts,{type:'line',unit:e.w===null?(e.unit==='sec'?'sec':'reps'):'lb'}):''}`;
   }
   openSheet(h);
 }
+function breathingFor(e){
+  if(e.id==='plank'||e.id==='dbug')return'Keep breathing gently throughout; do not brace by holding your breath.';
+  if(e.sec==='cool')return'Breathe slowly and comfortably. Ease out of the stretch if you need to hold your breath or feel pain.';
+  if(e.type==='time'&&['warm','fin'].includes(e.sec))return'Keep breathing steady and conversational. Reduce speed or stop if you become dizzy or unusually short of breath.';
+  if(e.sec==='mob')return'Breathe naturally and move with control; exhale gently through the effort.';
+  return'Exhale during the lifting or pulling effort and inhale as you return under control. Avoid holding your breath.';
+}
+function printGuide(title,meta,setup,steps,muscles,breath,safety,mistakes){
+  const root=$('#printRoot');
+  root.innerHTML=`<article class="print-guide"><h1>${esc(title)}</h1><div class="print-meta">${esc(meta)}</div>
+    <h2>Equipment setup and starting position</h2><p>${esc(setup)}</p>
+    <h2>Steps</h2><ol>${steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>
+    <h2>Target muscles</h2><p>${esc(muscles)}</p>
+    <h2>Breathing</h2><p>${esc(breath)}</p>
+    <h2>Safety and common mistakes</h2><p>${esc(safety)} ${esc(mistakes)}</p>
+    <p><small>Rebuild · General training information. Follow the equipment label and ask gym staff to demonstrate unfamiliar machines.</small></p></article>`;
+  window.addEventListener('afterprint',()=>{root.innerHTML=''}, {once:true});
+  window.print();
+}
+function printExercise(id){
+  const e=EXI[id];if(!e)return;
+  printGuide(e.name,`${e.equip} · ${rxStr(e)} · Estimated ${e.min<2?Math.round(e.min*60)+' seconds':e.min.toFixed(1)+' minutes'}`,
+    e.cues[0],e.cues.slice(1).length?e.cues.slice(1):e.cues,e.muscles,breathingFor(e),
+    'Stop if you feel sharp pain, dizziness or unusual shortness of breath.',e.mistake);
+}
+function machineCode(m){return'RB-'+m.id.toUpperCase()}
+function machineMuscles(m){return m.muscles||(EXI[m.exercise]&&EXI[m.exercise].muscles)||({
+  'pec-deck':'Chest or rear shoulders, depending on setup','assisted-pullup':'Lats, upper back, biceps or triceps',
+  'cable-station':'Varies by cable exercise','leg-extension':'Quadriceps','leg-curl':'Hamstrings',
+  'hip-abductor':'Gluteus medius and outer hips','hip-adductor':'Inner thighs','calf-raise':'Calves',
+  'smith-machine':'Varies by exercise','ab-crunch':'Abdominals','back-extension':'Spinal erectors and glutes',
+  elliptical:'Cardiovascular system, legs','exercise-bike':'Cardiovascular system, quadriceps and glutes',
+  stepmill:'Cardiovascular system, glutes and legs','glute-drive':'Glutes','cable-fly':'Chest',
+  'dumbbells':'Varies by exercise'
+}[m.id]||'Varies by exercise')};
+function machineSteps(m){
+  if(m.exercise&&EXI[m.exercise])return EXI[m.exercise].cues;
+  const steps={
+    'pec-deck':['Choose chest-fly or rear-delt orientation and set the seat so handles align with the target movement.','Keep a soft bend in the elbows and move through a comfortable arc without forcing the shoulder behind the body.','Return slowly; use a light load until the path feels familiar.'],
+    'assisted-pullup':['Select an assistance setting before mounting; more assistance makes the movement easier.','Use the labeled steps/handles to get into position and keep knees or feet centered on the moving pad.','Pull with control, then return to a straight-arm position without dropping onto the platform.'],
+    'cable-station':['Set pulleys at matching heights when using both sides and verify each pin/attachment is locked.','Stand clear of the weight stack and perform the chosen cable movement with a stable stance.','Return the handle slowly and let the stack settle quietly.'],
+    'leg-extension':['Align the knee joint with the machine pivot and set the shin pad just above the ankles.','Extend the knees smoothly without snapping them straight; pause briefly.','Lower the weight under control and use a comfortable range.'],
+    'leg-curl':['Align your knees with the machine pivot and secure the thigh/ankle pads as the machine label shows.','Curl your heels toward your body without lifting your hips.','Return slowly until the legs are comfortably extended.'],
+    'hip-abductor':['Sit supported with pads against the outer thighs and select a comfortable start width.','Press the knees outward smoothly without rocking the torso.','Return slowly; do not bounce at the end range.'],
+    'hip-adductor':['Sit supported with pads against the inner thighs and choose a comfortable starting width.','Bring the knees inward smoothly while keeping your back against the pad.','Let the weight return slowly; do not force a deep stretch.'],
+    'calf-raise':['Adjust the seat/shoulder pad and foot platform according to the machine label; check its safety release.','Rise onto the balls of your feet without bouncing.','Lower the heels under control through a comfortable range.'],
+    'smith-machine':['Set the safety stops and confirm hook direction before loading; ask staff for a first setup.','Use an empty bar to practice the movement and keep the bar path controlled.','Re-rack fully into the hooks before stepping away.'],
+    'dumbbells':['Choose a clear area and stable bench position; start with a load you can return safely.','Move the weights through a controlled range without swinging or dropping them.','Set weights down deliberately and return them to the rack.'],
+    'ab-crunch':['Adjust seat and pads so the pivot follows your body and begin with a light setting.','Brace gently and curl ribs toward pelvis through a small, pain-free range.','Return slowly without pulling on the neck or arms.'],
+    'back-extension':['Adjust the pivot/pad and range stop to your body; ask staff to check your setup.','Keep a neutral spine and hinge at the hips through a modest range.','Return to upright without leaning backward past neutral.'],
+    elliptical:['Step on while holding the stationary handles and start at low resistance.','Move smoothly with feet planted and an upright posture.','Slow the machine before stepping off.'],
+    'exercise-bike':['Adjust the seat so your knee remains slightly bent at the bottom of the pedal stroke.','Start with low resistance and pedal smoothly with your hips steady.','Reduce resistance and stop pedaling before dismounting.'],
+    stepmill:['Mount while the machine is stopped or at its lowest safe speed; hold rails for balance.','Step fully onto each stair at a sustainable pace and stand upright.','Slow and stop the machine before dismounting.'],
+    'glute-drive':['Set the seat and hip pad as labeled and secure the belt; place feet so shins are near vertical at the top.','Drive through the whole foot and extend hips without arching the lower back.','Lower the load slowly and use the machine’s release to exit.'],
+    'cable-fly':['Set both pulleys to the same height and attach matching handles.','Stand in a stable stance with soft elbows; bring hands together in front of the chest without forcing a stretch.','Return slowly while keeping shoulders comfortable.'],
+    'arc-trainer':['Step on while holding the stationary handles and select a low resistance/stride setting.','Move smoothly through the machine’s path while keeping your posture upright.','Slow down before stepping off.'],
+    'recumbent-stepper':['Adjust the seat and backrest so you can reach the pedals without locking your knees.','Step smoothly through a comfortable range with your back supported.','Reduce resistance and let the pedals stop before dismounting.'],
+    'air-bike':['Adjust the seat so there is a slight bend in the knee at the bottom of the pedal stroke.','Start with an easy pace and coordinate the moving handles with the pedals.','Build effort gradually and slow down before dismounting.'],
+    'spin-bike':['Set seat height and fore/aft position using the bike labels; secure footwear in the pedals.','Begin seated at low resistance and maintain a smooth cadence.','Slow the pedals and stop fully before stepping off.'],
+    'express-circuit':['Follow the station sequence and timing instructions posted in the circuit area.','Set the seat, pad and load at each station before the work interval begins.','Move only when the timer signals; use a controlled pace and leave the station ready for the next person.'],
+    'functional-trainer':['Lock the bench or station, choose a pulley height and attach the correct handle.','Check the pin and attachment, then stand clear of the stack and test with a light load.','Return the handle slowly and let the stack settle.'],
+    trx:['Inspect anchor, straps and handles before use; adjust the straps to the required length.','Keep a stable body line and use a more upright angle to reduce difficulty.','Step toward the anchor to unload the straps before releasing them.'],
+    'battle-ropes':['Check that the anchor is secure and the rope path is clear.','Hold one end in each hand, soften knees and create controlled waves from the shoulders/hips.','Stop before fatigue changes your posture or coordination.'],
+    'resistance-bands':['Inspect the band and anchor point; secure the band before applying tension.','Move slowly through a comfortable range while keeping the band away from your face.','Release tension gradually; do not let the band snap back.'],
+    'medicine-balls':['Choose a ball and movement appropriate to your ability; clear the floor and nearby people.','Keep a stable stance and use controlled throws or carries only where the surface and ball permit.','Retrieve the ball only after it has stopped moving.'],
+    bosu:['Place the trainer on a dry, non-slip surface beside a stable support.','Start with a two-foot balance and progress only while you remain steady.','Step down carefully rather than jumping off.'],
+    kettlebells:['Check the handle and floor space; select a light bell to practice the movement pattern.','Keep the bell close for lifts; for swings, use a controlled hip hinge and clear the swing path.','Set the bell down deliberately instead of dropping it.'],
+    barbells:['Load both sides evenly and check the bar/plates; set rack hooks and safety stops before unracking.','Use a trained spotter or ask staff if the lift requires one.','Re-rack the bar securely before removing plates.'],
+    'adjustable-benches':['Set the back and seat angle while the bench is unloaded.','Check the adjustment pins are engaged and the feet are stable before use.','Keep the bench clear and return it to a safe position after the exercise.']
+  };
+  return steps[m.id]||['Read the machine’s adjustment label and ask staff to verify your setup before the first set.','Use a light load and move through a comfortable, controlled range.','Return the weight slowly and secure the machine before leaving.'];
+}
+function machineSketch(m){
+  const person=`<circle cx="82" cy="37" r="9" class="hd"/><path d="M82 48V82M82 56L64 72M82 56L102 70M82 82L68 111M82 82L98 111" class="near"/>`;
+  let gear=`<path d="M12 130H188M52 24V128M52 32H145M145 32V128M47 128H67M136 128H156" class="e1" stroke-width="4"/><rect x="131" y="46" width="26" height="44" rx="3" class="e2"/><path d="M144 90V111M68 92H123M76 92V120" class="pad" stroke-width="7"/><path d="M102 70L131 68" class="cb"/>`;
+  let body=`<circle cx="82" cy="51" r="10" class="hd"/><path d="M82 62V91M82 70L65 83M82 70L104 81M82 91L70 119M82 91L105 119" class="near"/>`;
+  if(m.category==='Cardio'){
+    if(m.id==='treadmill'||m.id==='stepmill')gear=`<path d="M12 130H188M38 118L152 118M48 118L38 132M147 118L156 132M150 116L139 48M139 48H164M139 58H159" class="e1" stroke-width="4"/><path d="M151 64L166 64" class="acs" stroke-width="2"/>`;
+    else if(m.id==='exercise-bike'||m.id==='spin-bike')gear=`<circle cx="48" cy="112" r="22" class="e1" stroke-width="3"/><circle cx="146" cy="112" r="22" class="e1" stroke-width="3"/><path d="M48 112L82 81L108 112L64 112L82 81L94 56M82 81H111M88 51H104" class="e1" stroke-width="4"/>`;
+    else if(m.id==='recumbent-stepper')gear=`<path d="M15 130H185M50 110H111M68 108V126M49 90L51 110M51 90H87M100 54V128M100 58H137M101 67H132" class="e1" stroke-width="4"/><path d="M120 111L144 119M144 119L158 109" class="acs" stroke-width="3"/>`;
+    else if(m.id==='air-bike')gear=`<circle cx="53" cy="104" r="31" class="e1" stroke-width="4"/><circle cx="53" cy="104" r="7" class="e2"/><path d="M53 73L53 135M22 104H84M53 104L99 118L132 104M99 118L110 52M110 52H143M94 118L89 73" class="e1" stroke-width="4"/>`;
+    else if(m.id==='elliptical'||m.id==='arc-trainer')gear=`<path d="M20 130H180M57 128L75 98L104 91L133 128M75 98L65 42M65 42L57 34M104 91L127 40M127 40L140 33" class="e1" stroke-width="4"/><path d="M70 97L62 122M122 95L136 120" class="acs" stroke-width="3"/>`;
+    else gear=`<path d="M15 130H186M30 117H178M40 118V131M169 118V131M48 114H83M94 111L130 75M128 75L150 113M130 75L115 54M105 54H129M55 108V116" class="e1" stroke-width="4"/><circle cx="39" cy="108" r="14" class="e2"/>`;
+    body=`<circle cx="83" cy="30" r="9" class="hd"/><path d="M83 41L91 75L78 91M88 57L111 68M89 57L69 66M78 91L66 116M78 91L102 115" class="near"/>`;
+    if(m.id==='exercise-bike'||m.id==='spin-bike'||m.id==='air-bike')body=`<circle cx="86" cy="35" r="9" class="hd"/><path d="M86 46L101 71L91 83M93 57L110 59M94 58L78 70M91 83L72 105L64 111M91 83L109 105L119 111" class="near"/>`;
+    if(m.id==='rowing-erg')body=`<circle cx="82" cy="49" r="9" class="hd"/><path d="M82 60L96 78L115 83M91 70L70 79M91 70L111 66M96 78L79 101L62 106M96 78L119 96L144 100" class="near"/>`;
+    if(m.id==='recumbent-stepper')body=`<circle cx="76" cy="43" r="9" class="hd"/><path d="M76 54L83 82L105 87M81 63L64 78M81 63L101 67M105 87L130 102L145 106M105 87L121 113L139 118" class="near"/>`;
+  }else if(m.category==='Free weights'){
+    gear=m.id==='smith-machine'?`<path d="M28 22V130M172 22V130M28 32H172M28 116H172" class="e1" stroke-width="5"/><path d="M56 59H144" class="acs" stroke-width="5"/><rect x="49" y="54" width="8" height="13" class="e2"/><rect x="143" y="54" width="8" height="13" class="e2"/>`:`<path d="M25 111H175M67 101H133" class="e1" stroke-width="5"/><rect x="48" y="94" width="8" height="22" rx="2" class="e2"/><rect x="144" y="94" width="8" height="22" rx="2" class="e2"/>`;
+    body=person;
+  }else if(m.category==='Cable'){
+    gear=`<path d="M145 20V130M145 28H176M176 28V129M140 130H153M169 130H183" class="e1" stroke-width="5"/><rect x="148" y="43" width="22" height="40" rx="3" class="e2"/><path d="M158 83V100L110 70" class="cb"/><path d="M108 67L114 73" class="acs" stroke-width="3"/>`;
+    body=person;
+  }else if(m.category==='Functional'){
+    if(m.id==='trx')gear=`<path d="M135 16V35M135 35L107 103M135 35L160 103" class="e1" stroke-width="4"/><path d="M101 103H113M154 103H166" class="acs" stroke-width="4"/>`;
+    else if(m.id==='battle-ropes')gear=`<path d="M20 126C50 66 73 145 100 90S151 119 181 54M20 132C51 77 73 151 101 98S151 126 181 61" class="e1" stroke-width="4"/>`;
+    else if(m.id==='bosu')gear=`<path d="M38 116A62 48 0 0 1 162 116M27 117H173M40 125H160" class="e1" stroke-width="4"/>`;
+    else if(m.id==='medicine-balls'||m.id==='kettlebells')gear=`<circle cx="138" cy="94" r="20" class="e2"/><path d="M130 75Q138 62 146 75" class="e1" stroke-width="4"/>`;
+    else if(m.id==='resistance-bands')gear=`<path d="M145 20V80M145 80Q125 100 110 112" class="e1" stroke-width="4"/><path d="M110 112Q98 95 88 110" class="acs" stroke-width="4"/>`;
+    else gear=`<path d="M145 20V130M145 28H176M176 28V129M140 130H153M169 130H183" class="e1" stroke-width="5"/><rect x="148" y="43" width="22" height="40" rx="3" class="e2"/>`;
+    body=person;
+  }else if(m.category==='Circuit'){
+    gear=`<path d="M35 25V130M35 36H166M166 25V130M29 130H47M157 130H174" class="e1" stroke-width="5"/><rect x="45" y="49" width="24" height="36" rx="3" class="e2"/><path d="M57 85V103M67 102H137M88 102V127" class="pad" stroke-width="7"/>`;
+    body=person;
+  }
+  return `<svg viewBox="0 0 200 150" role="img" aria-label="${esc(m.name)} setup illustration">${gear}${body}</svg>`;
+}
+function vMachines(){
+  const cats=[...new Set(MACHINES.map(m=>m.category))];
+  return `<header class="top"><div><div class="eyebrow">Equipment guide</div><h1>Machines</h1></div></header>
+    <div class="card"><h3>Browse common gym equipment</h3><p class="small muted">This reference covers common machines and training equipment found in many Planet Fitness clubs. It is not a verified inventory for your location: layouts, brands, adjustments and availability vary. Match the labels on your actual machine and ask staff before using unfamiliar equipment.</p>
+      <div class="row2"><button class="btn" onclick="openScanner()">Scan a machine QR</button><button class="btn2" onclick="$('#machineSearch').focus()">Search catalogue</button></div>
+      <div id="scanner" class="hidden card" style="margin-top:12px"><div class="row"><b>Identify equipment</b><button class="btn2 sm" onclick="closeScanner()">Close</button></div><video id="scannerVideo" playsinline muted style="width:100%;max-height:260px;background:#000;border-radius:12px;margin-top:8px"></video><p class="small muted" id="scanStatus" aria-live="polite">Scan a Rebuild code (RB-...) or a QR whose text names a listed machine.</p><label class="f"><span>Manual lookup fallback</span><input id="machineCodeInput" class="field" placeholder="Machine name or code, e.g. RB-LAT-PULLDOWN"></label><button class="btn2" onclick="lookupMachineCode()">Find machine</button></div>
+      <div class="catalog-tools"><input id="machineSearch" class="field" value="${esc(MACHINE_QUERY)}" oninput="MACHINE_QUERY=this.value;renderMachines()" placeholder="Search name, muscle group or equipment" aria-label="Search machine catalogue"><select id="machineCategory" class="field" onchange="MACHINE_CATEGORY=this.value;renderMachines()"><option value="all">All categories</option>${cats.map(c=>`<option value="${esc(c)}" ${MACHINE_CATEGORY===c?'selected':''}>${esc(c)}</option>`).join('')}</select></div>
+    </div><div id="machineResults" class="catalog-grid"></div><div id="machineDetail"></div>`;
+}
+function renderMachines(){
+  const root=$('#machineResults');if(!root)return;
+  const q=MACHINE_QUERY.trim().toLowerCase();
+  const list=MACHINES.filter(m=>(MACHINE_CATEGORY==='all'||m.category===MACHINE_CATEGORY)&&`${m.name} ${m.category} ${m.aliases||''} ${machineMuscles(m)} ${m.setup}`.toLowerCase().includes(q));
+  root.innerHTML=list.map(m=>`<article class="catalog-card"><div class="row"><span class="chip k">${esc(m.category)}</span><span class="code">${esc(machineCode(m))}</span></div>
+    <div class="fig">${machineSketch(m)}</div><h3>${esc(m.name)}</h3><p class="small muted">${esc(machineMuscles(m))}</p><button class="btn2 sm" onclick="openMachine('${m.id}')">Setup & instructions</button></article>`).join('')||'<div class="card empty">No matching equipment. Try a muscle group, category or alternate name.</div>';
+  if(MACHINE_ACTIVE)renderMachineDetail(MACHINE_ACTIVE);
+}
+function renderMachineDetail(id){
+  const root=$('#machineDetail');if(!root)return;
+  const m=MACHINES.find(x=>x.id===id);if(!m){root.innerHTML='';return}
+  const e=m.exercise?EXI[m.exercise]:null,steps=machineSteps(m);
+  root.innerHTML=`<section class="card" style="margin-top:12px"><div class="row"><div><div class="eyebrow">${esc(m.category)} · ${esc(machineCode(m))}</div><h2 style="margin-top:4px">${esc(m.name)}</h2></div><button class="btn2 sm" onclick="closeMachineDetail()">Close</button></div>
+    ${e?`<div class="fig bigfig">${animSVG(e.id)}</div><p class="small muted">Movement demonstration: ${esc(e.name)}. It illustrates the movement pattern; machine model, seat and adjustment points can differ by club.</p>`:`<div class="fig bigfig">${machineSketch(m)}</div><p class="small muted">Setup illustration only, not a model-specific movement animation. Follow the diagram and adjustment labels on the equipment.</p>`}
+    <div class="chips"><span class="chip k">${esc(m.category)}</span><span class="chip">${esc(machineMuscles(m))}</span></div>
+    <h3>Equipment setup and start position</h3><p class="small muted">${esc(m.setup)}</p>
+    <h3>How to use it</h3><ol class="cues">${steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>
+    <div class="card"><b>Breathing</b><p class="small muted">${esc(e?breathingFor(e):'Breathe continuously and comfortably; exhale during the effort and inhale during the controlled return.')}</p></div>
+    <div class="warn"><b>Common mistakes / safety:</b> ${esc(m.mistake)} Stop for sharp pain, dizziness or unusual shortness of breath.</div>
+    <div class="row2" style="margin-top:12px">${e?`<button class="btn2" onclick="openEx('${e.id}')">Open exercise guide</button>`:'<span></span>'}<button class="btn2" onclick="printMachine('${m.id}')">Print guide</button></div>
+  </section>`;
+  if(e)mountAnims(root);
+}
+function openMachine(id){MACHINE_ACTIVE=id;renderMachineDetail(id);$('#machineDetail').scrollIntoView({behavior:'smooth',block:'start'})}
+function closeMachineDetail(){MACHINE_ACTIVE='';renderMachineDetail('')}
+function printMachine(id){
+  const m=MACHINES.find(x=>x.id===id);if(!m)return;
+  const e=m.exercise?EXI[m.exercise]:null;
+  printGuide(m.name,`${m.category} · ${machineCode(m)} · ${machineMuscles(m)}`,m.setup,machineSteps(m),machineMuscles(m),
+    e?breathingFor(e):'Breathe continuously and comfortably; exhale during the effort and inhale during the controlled return.',
+    'Check the machine label, pins, pads and safety stops before starting. Ask staff for unfamiliar equipment.',m.mistake);
+}
+function parseMachineCode(raw){
+  const text=String(raw||'').trim();if(!text)return null;
+  const values=[text];try{values.push(decodeURIComponent(text))}catch(e){}
+  try{
+    const u=new URL(text);
+    const hash=new URLSearchParams(u.hash.replace(/^#\??/,''));
+    values.push(u.searchParams.get('machine')||'',u.searchParams.get('id')||'',u.searchParams.get('code')||'',
+      hash.get('machine')||'',hash.get('id')||'',hash.get('code')||'',u.pathname.split('/').filter(Boolean).pop()||'');
+  }
+  catch(e){}
+  const normalize=s=>String(s).trim().toLowerCase().replace(/^rb[-_:]/,'').replace(/[^a-z0-9]/g,'');
+  const tokens=values.map(normalize).filter(Boolean);
+  return MACHINES.find(m=>tokens.some(t=>t===normalize(m.id)||t===normalize(machineCode(m))||t===normalize(m.name)
+    ||t.includes(normalize(m.id))||t.includes(normalize(m.name))));
+}
+function lookupMachineCode(){
+  const raw=$('#machineCodeInput')?.value||'';
+  const m=parseMachineCode(raw);
+  if(m){$('#scanStatus').textContent=`Found ${m.name}.`;closeScanner();openMachine(m.id);return}
+  $('#scanStatus').textContent='No catalogue match. Search by machine name or muscle group below; QR formats vary by location.';
+}
+async function openScanner(){
+  const box=$('#scanner');if(!box)return;
+  box.classList.remove('hidden');
+  const status=$('#scanStatus'),video=$('#scannerVideo');
+  if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia){
+    status.textContent='Camera scanning requires HTTPS or localhost and browser camera support. Use the manual lookup or catalogue search below.';
+    return;
+  }
+  if(!('BarcodeDetector'in window)){
+    status.textContent='This browser cannot scan QR codes directly. Use the manual code field or search the catalogue below.';
+    return;
+  }
+  try{
+    const detector=new BarcodeDetector({formats:['qr_code']});
+    SCAN_STREAM=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+    video.srcObject=SCAN_STREAM;await video.play();
+    status.textContent='Camera ready. Center a machine QR code in view.';
+    const scan=async()=>{
+      if(!SCAN_STREAM||SCAN_BUSY)return;
+      SCAN_BUSY=true;
+      try{
+        const codes=await detector.detect(video);
+        if(codes.length){
+          const m=parseMachineCode(codes[0].rawValue);
+          if(m){status.textContent=`Found ${m.name}.`;closeScanner();openMachine(m.id);return}
+          status.textContent='QR detected, but its code is not mapped in this catalogue. Search the machine name or use manual lookup.';
+        }
+      }catch(e){status.textContent='Could not read that QR. Hold it steady or use manual lookup.'}
+      finally{SCAN_BUSY=false}
+      if(SCAN_STREAM)SCAN_FRAME=requestAnimationFrame(scan);
+    };
+    SCAN_FRAME=requestAnimationFrame(scan);
+  }catch(e){
+    stopScan();
+    status.textContent='Camera unavailable or permission denied. Search the catalogue or enter a machine name/code below.';
+  }
+}
+function stopScan(){
+  if(SCAN_FRAME)cancelAnimationFrame(SCAN_FRAME);SCAN_FRAME=0;SCAN_BUSY=false;
+  if(SCAN_STREAM)SCAN_STREAM.getTracks().forEach(t=>t.stop());SCAN_STREAM=null;
+  const video=$('#scannerVideo');if(video)video.srcObject=null;
+}
+function closeScanner(){stopScan();$('#scanner')?.classList.add('hidden')}
 
 /* ================= workout mode ================= */
 let WO_OPEN=false,WL=null,AC=null,TICK=null;
@@ -575,17 +1029,17 @@ function unlockAudio(){try{AC=AC||new(window.AudioContext||window.webkitAudioCon
 function beep(n){try{if(!AC)return;let t=AC.currentTime;for(let i=0;i<(n||2);i++){const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=i===(n||2)-1?1175:880;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.3,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.22);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+.25);t+=.3}}catch(e){}}
 async function wake(){try{if(navigator.wakeLock)WL=await navigator.wakeLock.request('screen')}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&WO_OPEN)wake()});
-function newActive(){return{start:Date.now(),idx:0,enter:Date.now(),restEnd:0,restTotal:0,
-  items:EX.map(e=>({id:e.id,t:0,done:false,beeped:false,rem:e.dur||0,endAt:0,
+function newActive(){return{start:Date.now(),plannedSeconds:DB.plan.duration*60,idx:0,enter:Date.now(),restEnd:0,restTotal:0,
+  items:planExercises().map(e=>({id:e.id,t:0,done:false,beeped:false,rem:e.dur||0,endAt:0,
     sets:e.type==='sets'?Array.from({length:e.sets},()=>({w:suggestW(e),r:firstNum(e.reps),done:false})):null}))}}
-function startWorkout(){unlockAudio();if(!ACTIVE){ACTIVE=newActive();saveA()}openWO()}
+function startWorkout(){if(!ACTIVE&&!planReady()){toast('Select warm-up, mobility, strength and cooldown moves that fit your time');return}unlockAudio();if(!ACTIVE){ACTIVE=newActive();saveA()}openWO()}
 function openWO(){unlockAudio();WO_OPEN=true;renderWO();wake();if(!TICK)TICK=setInterval(tickWO,250);$('#resumeBtn').classList.add('hidden')}
 function minimizeWO(){WO_OPEN=false;$('#woRoot').innerHTML='';try{WL&&WL.release()}catch(e){}render()}
 function accrue(){if(!ACTIVE)return;const now=Date.now();ACTIVE.items[ACTIVE.idx].t+=Math.min((now-ACTIVE.enter)/1000,1200);ACTIVE.enter=now}
-function setIdx(i){if(!ACTIVE)return;i=Math.max(0,Math.min(EX.length-1,i));accrue();ACTIVE.idx=i;saveA();renderWO();$('.wo').scrollTo(0,0)}
+function setIdx(i){if(!ACTIVE)return;i=Math.max(0,Math.min(ACTIVE.items.length-1,i));accrue();ACTIVE.idx=i;saveA();renderWO();$('.wo').scrollTo(0,0)}
 function woNext(){const it=ACTIVE.items[ACTIVE.idx];if(EXI[it.id].type==='time'&&it.endAt){it.rem=Math.max(0,(it.endAt-Date.now())/1000);it.endAt=0}
   it.done=it.done||EXI[it.id].type==='time'||(it.sets&&it.sets.some(s=>s.done));
-  if(ACTIVE.idx>=EX.length-1){askFinish();return}setIdx(ACTIVE.idx+1)}
+  if(ACTIVE.idx>=ACTIVE.items.length-1){askFinish();return}setIdx(ACTIVE.idx+1)}
 function woPrev(){setIdx(ACTIVE.idx-1)}
 function toggleTimer(){unlockAudio();const it=ACTIVE.items[ACTIVE.idx];
   if(it.endAt){it.rem=Math.max(0,(it.endAt-Date.now())/1000);it.endAt=0}else{if(it.rem<=0.5){it.rem=EXI[it.id].dur;it.beeped=false}it.endAt=Date.now()+it.rem*1000}
@@ -593,7 +1047,7 @@ function toggleTimer(){unlockAudio();const it=ACTIVE.items[ACTIVE.idx];
 function resetTimer(){const it=ACTIVE.items[ACTIVE.idx];it.endAt=0;it.rem=EXI[it.id].dur;it.beeped=false;saveA();renderWO()}
 function setVal(si,k,v){const it=ACTIVE.items[ACTIVE.idx];it.sets[si][k]=v===''?'':+v;saveA()}
 function toggleSet(si){unlockAudio();const it=ACTIVE.items[ACTIVE.idx];const e=EXI[it.id];const s=it.sets[si];s.done=!s.done;
-  if(s.done){it.done=true;if(si<it.sets.length-1||ACTIVE.idx<EX.length-1){ACTIVE.restEnd=Date.now()+e.rest*1000;ACTIVE.restTotal=e.rest;ACTIVE.restBeeped=false}}
+  if(s.done){it.done=true;if(si<it.sets.length-1||ACTIVE.idx<ACTIVE.items.length-1){ACTIVE.restEnd=Date.now()+e.rest*1000;ACTIVE.restTotal=e.rest;ACTIVE.restBeeped=false}}
   saveA();renderWO()}
 function addSet(){const it=ACTIVE.items[ACTIVE.idx];const l=it.sets[it.sets.length-1]||{w:'',r:10};it.sets.push({w:l.w,r:l.r,done:false});saveA();renderWO()}
 function rmSet(){const it=ACTIVE.items[ACTIVE.idx];if(it.sets.length>1)it.sets.pop();saveA();renderWO()}
@@ -621,19 +1075,19 @@ function renderWO(){
   }
   $('#woRoot').innerHTML=`<div class="wo"><div class="wrap">
    <div class="wohead"><button class="ic" onclick="minimizeWO()" aria-label="Minimize workout">${IC.down}</button>
-    <div class="clock"><span id="woClock">${fmtT((Date.now()-ACTIVE.start)/1000)}</span><small id="woKcal">~${Math.round(liveKcal())} kcal</small></div>
+    <div class="clock"><span id="woClock">${fmtT((Date.now()-ACTIVE.start)/1000)}</span><small id="woKcal">~${Math.round(liveKcal())} kcal · ${fmtT(Math.max(0,(ACTIVE.plannedSeconds||DB.plan.duration*60)-(Date.now()-ACTIVE.start)/1000))} left</small></div>
     <button class="pill" onclick="askFinish()">Finish</button></div>
    <div class="seg">${ACTIVE.items.map((x,i)=>`<i class="${x.done?'d':''} ${i===ACTIVE.idx?'c':''}" style="--c:${SEC[EXI[x.id].sec].c}" onclick="setIdx(${i})"></i>`).join('')}</div>
-   <div class="eyebrow" style="color:${sc.c}">${sc.name} · ${ACTIVE.idx+1} of ${EX.length}</div>
+   <div class="eyebrow" style="color:${sc.c}">${sc.name} · ${ACTIVE.idx+1} of ${ACTIVE.items.length}</div>
    <div class="fig wofig">${animSVG(e.id)}</div>
    <h2>${esc(e.name)}</h2>
    <div class="chips"><span class="chip k">${esc(e.equip)}</span><span class="chip">${esc(e.muscles)}</span></div>
-   <details class="how"><summary>How to do it</summary><ul class="cues">${e.cues.map(c=>`<li>${esc(c)}</li>`).join('')}</ul><div class="warn"><b>Avoid:</b> ${esc(e.mistake)}</div></details>
+   <details class="how"><summary>Setup, movement & breathing</summary><ul class="cues">${e.cues.map(c=>`<li>${esc(c)}</li>`).join('')}</ul><p class="small muted"><b>Breathing:</b> ${esc(breathingFor(e))}</p><div class="warn"><b>Avoid:</b> ${esc(e.mistake)}</div></details>
    ${panel}
-   ${ACTIVE.idx<EX.length-1?`<p class="small muted" style="margin:4px 2px">Up next: <b style="color:var(--tx)">${esc(EX[ACTIVE.idx+1].name)}</b></p>`:''}
+   ${ACTIVE.idx<ACTIVE.items.length-1?`<p class="small muted" style="margin:4px 2px">Up next: <b style="color:var(--tx)">${esc(EXI[ACTIVE.items[ACTIVE.idx+1].id].name)}</b></p>`:''}
   </div>
   <div class="rest hidden" id="rest"><div class="num" id="restT">0:00</div><div class="grow">Rest<br><span id="restN"></span></div><button onclick="restAdj(-15)">−15</button><button onclick="restAdj(15)">+15</button><button onclick="restSkip()">Skip</button></div>
-  <div class="wonav"><div class="in"><button class="btn2" onclick="woPrev()" ${ACTIVE.idx===0?'disabled style="opacity:.4"':''}>← Back</button><button class="btn" onclick="woNext()">${ACTIVE.idx<EX.length-1?'Next move →':'Finish workout ✓'}</button></div></div></div>`;
+  <div class="wonav"><div class="in"><button class="btn2" onclick="woPrev()" ${ACTIVE.idx===0?'disabled style="opacity:.4"':''}>← Back</button><button class="btn" onclick="woNext()">${ACTIVE.idx<ACTIVE.items.length-1?'Next move →':'Finish workout ✓'}</button></div></div></div>`;
   mountAnims($('#woRoot'));tickWO();
 }
 function liveKcal(){if(!ACTIVE)return 0;let s=0;ACTIVE.items.forEach((x,i)=>{let t=x.t;if(i===ACTIVE.idx)t+=Math.min((Date.now()-ACTIVE.enter)/1000,1200);s+=t/60*kcalMin(EXI[x.id].met)});return s}
@@ -642,7 +1096,9 @@ function tickWO(){
   const rb=$('#rbT');if(rb)rb.textContent=fmtT((now-ACTIVE.start)/1000);
   if(!WO_OPEN)return;
   const c=$('#woClock');if(c)c.textContent=fmtT((now-ACTIVE.start)/1000);
-  const k=$('#woKcal');if(k)k.textContent='~'+Math.round(liveKcal())+' kcal';
+  const k=$('#woKcal');if(k){const remaining=Math.max(0,(ACTIVE.plannedSeconds||DB.plan.duration*60)-(now-ACTIVE.start)/1000);k.textContent='~'+Math.round(liveKcal())+' kcal · '+fmtT(remaining)+' left'}
+  const planned=ACTIVE.plannedSeconds||DB.plan.duration*60;
+  if(now-ACTIVE.start>=planned&&!ACTIVE.targetWarned){ACTIVE.targetWarned=true;saveA();toast('Planned session time reached. Finish safely or wrap up.')}
   const it=ACTIVE.items[ACTIVE.idx],e=EXI[it.id];
   if(e.type==='time'&&it.endAt){const rem=Math.max(0,(it.endAt-now)/1000);const cd=$('#cd');if(cd)cd.textContent=fmtT(rem);const b=$('#cdBar');if(b)b.style.width=(100-rem/e.dur*100)+'%';
     if(rem<=0&&!it.beeped){it.beeped=true;it.endAt=0;it.rem=0;it.done=true;saveA();beep(3);toast('Time! Tap Next move');renderWO()}}
@@ -652,7 +1108,7 @@ function tickWO(){
 }
 function askFinish(){
   const done=ACTIVE.items.filter(x=>x.done).length;
-  openSheet(`<h2 style="margin:4px 0 8px">Finish workout?</h2><p class="muted">You've completed ${done} of ${EX.length} moves in ${fmtT((Date.now()-ACTIVE.start)/1000)}.</p>
+  openSheet(`<h2 style="margin:4px 0 8px">Finish workout?</h2><p class="muted">You've completed ${done} of ${ACTIVE.items.length} selected moves in ${fmtT((Date.now()-ACTIVE.start)/1000)}.</p>
    <button class="btn" onclick="finishWorkout()">Save workout</button><div style="height:10px"></div>
    <div class="row2"><button class="btn2" onclick="closeSheet()">Keep going</button><button class="btn2 danger" id="discBtn" onclick="discard(this)">Discard</button></div>`)}
 function discard(b){if(b.dataset.c){ACTIVE=null;saveA();closeSheet();WO_OPEN=false;$('#woRoot').innerHTML='';render();toast('Workout discarded');return}b.dataset.c=1;b.textContent='Tap again to discard'}
@@ -824,8 +1280,8 @@ function saveProfile(){const p=DB.profile;const ft=+$('#pFt').value,inch=+$('#pI
   if(changedW||!DB.bw.length)DB.bw.push({d:new Date().toISOString(),lb});save();toast('Saved. Estimates updated');render()}
 function copyBackup(){const txt=JSON.stringify(DB);const o=$('#backupOut');o.value=txt;o.classList.remove('hidden');
   try{navigator.clipboard.writeText(txt).then(()=>toast('Backup copied'),()=>{o.select();toast('Select & copy the text below')})}catch(e){o.select();toast('Select & copy the text below')}}
-function restoreBackup(){try{const d=JSON.parse($('#restoreTxt').value);if(!d||!Array.isArray(d.sessions))throw 0;DB=Object.assign({profile:DB.profile,sessions:[],bw:[]},d);save();toast('Backup restored');render()}catch(e){toast('That backup text is not valid')}}
-function resetAll(b){if(!b.dataset.c){b.dataset.c=1;b.textContent='Tap again to erase everything';return}DB={profile:{ft:5,inch:8,lb:163,age:'',sex:'',perWeek:3,set:false},sessions:[],bw:[]};ACTIVE=null;save();saveA();render();toast('All data erased')}
+function restoreBackup(){try{const d=JSON.parse($('#restoreTxt').value);if(!d||!Array.isArray(d.sessions))throw 0;DB=Object.assign({profile:DB.profile,sessions:[],bw:[]},d);DB.profile=Object.assign({ft:5,inch:8,lb:163,age:'',sex:'',perWeek:3,set:false},DB.profile||{});DB.sessions=Array.isArray(DB.sessions)?DB.sessions:[];DB.bw=Array.isArray(DB.bw)?DB.bw:[];normalizePlan();save();toast('Backup restored');render()}catch(e){toast('That backup text is not valid')}}
+function resetAll(b){if(!b.dataset.c){b.dataset.c=1;b.textContent='Tap again to erase everything';return}DB={profile:{ft:5,inch:8,lb:163,age:'',sex:'',perWeek:3,set:false},sessions:[],bw:[],plan:{duration:60,selected:DEFAULT_PLAN_IDS.slice()}};ACTIVE=null;save();saveA();render();toast('All data erased')}
 
 /* ================= boot ================= */
 render();requestAnimationFrame(frame);
