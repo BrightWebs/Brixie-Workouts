@@ -270,11 +270,11 @@ select.field{appearance:none;-webkit-appearance:none;background-image:linear-gra
 .muscle-view{text-align:center;font-size:11px;color:var(--mu)}
 .muscle-view svg{display:block;width:100%;height:220px}
 .muscle-region{fill:#303943;stroke:#66717f;stroke-width:1}
-.muscle-region.primary{fill:var(--ac);stroke:#e7ffab}
-.muscle-region.secondary{fill:var(--mob);stroke:#b2e9ff}
+.muscle-region.primary{fill:#e83e65;stroke:#ffb4c7}
+.muscle-region.secondary{fill:#f59aaf;stroke:#ffd3de}
 .muscle-legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;margin-top:8px}
-.muscle-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;background:var(--ac)}
-.muscle-legend .support i{background:var(--mob)}
+.muscle-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;background:#e83e65}
+.muscle-legend .support i{background:#f59aaf}
 .muscle-tags{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
 .muscle-tags button{border:1px solid var(--ln);border-radius:999px;background:var(--s2);padding:7px 10px;font-size:12px}
 .muscle-tags button[aria-pressed="true"]{background:var(--ac);color:var(--ink)}
@@ -416,8 +416,8 @@ function bodySegment(a,b,wa,wb,color){
 }
 function humanFigure(ex,J){
   const targets=EX_TARGETS[ex.id]||[[],[]];
-  const color=(regions,far=false)=>targets[0].some(x=>regions.includes(x))?(far?'#718e25':'#C8F135'):
-    targets[1].some(x=>regions.includes(x))?(far?'#2c7389':'#4FC3F7'):far?'#536477':'#A4B4C6';
+  const color=(regions,far=false)=>targets[0].some(x=>regions.includes(x))?(far?'#942640':'#e83e65'):
+    targets[1].some(x=>regions.includes(x))?(far?'#a26172':'#f59aaf'):far?'#536477':'#A4B4C6';
   const arm=(limb,far)=>bodySegment(J.sh,limb.j,5.3,3.8,color(['biceps','triceps','shoulders'],far))
     +bodySegment(limb.j,limb.e,3.8,2.4,color(['forearms'],far))+Ci(limb.e[0],limb.e[1],3,far?'human-far':'human-skin');
   const leg=(limb,toe,far)=>bodySegment(J.hip,limb.j,8,5,color(['quads','hamstrings','adductors','glutes'],far))
@@ -427,7 +427,7 @@ function humanFigure(ex,J){
   return arm(J.arm2,true)+leg(J.leg2,J.toe2,true)+torso
     +bodySegment(J.sh,J.head,3.8,3.6,'#a4b4c6')
     +`<ellipse cx="${n1(J.head[0])}" cy="${n1(J.head[1])}" rx="6.8" ry="9" fill="#bdcad8" stroke="#6d7c8d" stroke-width=".7"/>`
-    +Ln(add(J.head,[2,-1]),add(J.head,[4,-1]),'face',1)+Ci(J.hip[0],J.hip[1],9,'human-shorts')
+    +Ci(J.hip[0],J.hip[1],9,'human-shorts')
     +leg(J.leg1,J.toe,false)+arm(J.arm1,false);
 }
 function figSVG(ex,p){
@@ -955,7 +955,7 @@ function muscleMap(e,targets=EX_TARGETS[e.id],interactive=false){
     <div class="muscle-legend"><span><i></i>${esc(mode)}</span><span class="support"><i></i>Supporting / also involved</span></div>
     <p class="small"><b>${esc(mode)}:</b> ${esc(labels(primary))}${secondary.length?`<br><b>Also involved:</b> ${esc(labels(secondary))}`:''}</p>
     <p class="small muted">3D anatomical reference, not an exercise animation. Highlights identify broad target groups, not measured activation. Use Isolate targets to reveal deeper muscles, including spinal extensors; not every target is visible from every view.${e.sec==='warm'||e.sec==='fin'?' Aerobic involvement is not equivalent to resistance training.':''}${e.sec==='cool'||e.sec==='mob'?' These regions are moved or stretched, not a claim of muscle growth.':''}</p>
-    <p class="anatomy-credit">Atlas adapted by Fit Mit With from <a href="https://github.com/Z-Anatomy/Models-of-human-anatomy" target="_blank" rel="noopener">Z-Anatomy</a> / BodyParts3D. <a href="assets/anatomy/credits.html" target="_blank" rel="noopener">Credits, source &amp; CC BY-SA 4.0 license</a>. Display changes: neutral shading, exercise highlights, paired camera views.</p></section>`;
+    <p class="anatomy-credit">Atlas adapted by Fit Mit With from <a href="https://github.com/Z-Anatomy/Models-of-human-anatomy" target="_blank" rel="noopener">Z-Anatomy</a> / BodyParts3D. <a href="assets/anatomy/credits.html" target="_blank" rel="noopener">Credits, source &amp; CC BY-SA 4.0 license</a>. Display changes: neutral shading, pink-red highlights, paired camera views and featureless heads.</p></section>`;
 }
 window.addEventListener('message',event=>{
   if(event.origin!==location.origin||event.data?.type!=='rebuild:select-muscle')return;

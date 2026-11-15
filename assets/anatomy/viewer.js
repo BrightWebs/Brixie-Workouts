@@ -74,6 +74,7 @@ function hit(event) {
 
 try {
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.localClippingEnabled = true;
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.setClearColor(0x10151c, 0);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -89,19 +90,21 @@ try {
   model = gltf.scene;
   const box = new THREE.Box3().setFromObject(model);
   bounds = box.getSize(new THREE.Vector3());
-  model.position.sub(box.getCenter(new THREE.Vector3()));
+  const center = box.getCenter(new THREE.Vector3());
+  model.position.sub(center);
+  const headCutoff = new THREE.Plane(new THREE.Vector3(0, -1, 0), bounds.y * .382);
   const materials = new Map();
-  const contextMaterial = new THREE.MeshStandardMaterial({ color:0x667481, transparent:true, opacity:.12, depthWrite:false });
+  const contextMaterial = new THREE.MeshStandardMaterial({ color:0x667481, transparent:true, opacity:.12, depthWrite:false, clippingPlanes:[headCutoff] });
   model.traverse(object => {
     if (!object.isMesh) return;
     const data = object.userData;
     const group = GROUPS[data.group];
-    const color = group && primary.has(group) ? 0xc8f135 :
-      group && secondary.has(group) ? 0x4fc3f7 : data.muscleId ? 0x929eab : 0x667481;
+    const color = group && primary.has(group) ? 0xe83e65 :
+      group && secondary.has(group) ? 0xf59aaf : data.muscleId ? 0x929eab : 0x667481;
     if (!materials.has(color)) materials.set(color, new THREE.MeshStandardMaterial({
       color, roughness: .72, metalness: .05,
-      emissive: color === 0xc8f135 ? 0x283800 : color === 0x4fc3f7 ? 0x071c2b : 0x000000,
-      emissiveIntensity: .25
+      emissive: color === 0xe83e65 ? 0x480c1b : color === 0xf59aaf ? 0x301017 : 0x000000,
+      emissiveIntensity: .25, clippingPlanes:[headCutoff]
     }));
     object.material = materials.get(color);
     object.userData.surfaceMaterial = object.material;
@@ -109,6 +112,13 @@ try {
     object.userData.selectionGroup = group;
     meshes.push(object);
   });
+  // Replace the facial anatomy with a smooth, featureless head in every view.
+  const head = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 32),
+    new THREE.MeshStandardMaterial({ color:0x929eab, roughness:.72, metalness:.05 }));
+  head.scale.set(bounds.y * .05, bounds.y * .065, bounds.y * .061);
+  head.position.copy(center);
+  head.position.y = box.max.y - bounds.y * .065;
+  model.add(head);
   scene.add(model);
   status.hidden = true;
   selection.textContent = interactive ? 'Tap a muscle to select it. You can also use the muscle buttons below.' : 'Tap a muscle to see its anatomical name.';
