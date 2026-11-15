@@ -99,11 +99,11 @@ try {
     if (!object.isMesh) return;
     const data = object.userData;
     const group = GROUPS[data.group];
-    const color = group && primary.has(group) ? 0xe83e65 :
-      group && secondary.has(group) ? 0xf59aaf : data.muscleId ? 0x929eab : 0x667481;
+    const color = group && primary.has(group) ? 0xef7777 :
+      group && secondary.has(group) ? 0xf5aaaa : data.muscleId ? 0x929eab : 0x667481;
     if (!materials.has(color)) materials.set(color, new THREE.MeshStandardMaterial({
       color, roughness: .72, metalness: .05,
-      emissive: color === 0xe83e65 ? 0x480c1b : color === 0xf59aaf ? 0x301017 : 0x000000,
+      emissive: color === 0xef7777 ? 0x3c1414 : color === 0xf5aaaa ? 0x301818 : 0x000000,
       emissiveIntensity: .25, clippingPlanes:[headCutoff]
     }));
     object.material = materials.get(color);
