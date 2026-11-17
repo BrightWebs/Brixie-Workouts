@@ -293,11 +293,19 @@ function exportCalendar(){
   a.href=url;a.download='rebuild-workouts.ics';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function scheduleOverview(){
-  const dates=weekDates();
-  return `<section class="card"><div class="row"><h2>Your week</h2><button class="btn2 sm" onclick="exportCalendar()">Export calendar</button></div>
-    <div class="row2" style="margin:12px 0"><button class="btn2 sm" onclick="WEEK_OFFSET--;render()">Previous week</button><button class="btn2 sm" onclick="WEEK_OFFSET=0;render()">This week</button><button class="btn2 sm" onclick="WEEK_OFFSET++;render()">Next week</button></div>
-    <div class="week-grid">${dates.map(date=>{const events=DB.schedules.filter(s=>scheduleMatches(s,date)&&DB.workouts.some(w=>w.id===s.workoutId)).sort((a,b)=>a.time.localeCompare(b.time));return `<div class="week-day"><b>${DAYS[new Date(date+'T12:00:00').getDay()]}</b><div class="small muted">${date}</div>${events.map(s=>{const w=DB.workouts.find(x=>x.id===s.workoutId);return `<div class="week-event"><b>${esc(w.name)}</b><div class="small muted">${esc(s.time)} / ${s.minutes} min</div><div class="builder-actions"><button class="btn2 sm" onclick="startSavedWorkout('${w.id}','${s.id}','${date}')">Start</button><button class="btn2 sm" onclick="openSchedule('${w.id}','${s.id}')">Reschedule</button><button class="btn2 sm danger" onclick="removeSchedule('${s.id}',this)">Remove</button></div></div>`}).join('')||'<p class="small muted">Rest / unscheduled</p>'}</div>`}).join('')}</div>
-    <p class="small muted">There was no existing calendar or reminder service in this app. Import the exported calendar into your calendar app for 15-minute reminders. This website does not promise background alarms when it is closed.</p></section>`;
+  const dates=weekDates(),today=localDate(new Date());
+  const eventsOn=date=>DB.schedules.filter(s=>scheduleMatches(s,date)&&DB.workouts.some(w=>w.id===s.workoutId)).sort((a,b)=>a.time.localeCompare(b.time));
+  const nice=date=>new Date(date+'T12:00:00').toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'});
+  const first=new Date(dates[0]+'T12:00:00'),last=new Date(dates[6]+'T12:00:00');
+  const range=first.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' – '+last.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+  const busy=dates.filter(d=>eventsOn(d).length);
+  return `<section class="card week-card"><div class="row"><div><h2>Your week</h2><div class="small muted">${range}</div></div><button class="btn2 sm" onclick="exportCalendar()">Add to calendar</button></div>
+    <div class="week-nav"><button class="icon-btn" onclick="WEEK_OFFSET--;render()" aria-label="Previous week">‹</button>
+     <div class="week-strip">${dates.map(date=>{const d=new Date(date+'T12:00:00'),n=eventsOn(date).length;return `<div class="wday${date===today?' today':''}${n?' has':''}"><span>${DAYS[d.getDay()].slice(0,3)}</span><b>${d.getDate()}</b><i></i></div>`}).join('')}</div>
+     <button class="icon-btn" onclick="WEEK_OFFSET++;render()" aria-label="Next week">›</button></div>
+    ${WEEK_OFFSET?`<button class="link-btn" onclick="WEEK_OFFSET=0;render()">Back to this week</button>`:''}
+    ${busy.length?busy.map(date=>`<div class="day-block"><div class="day-label">${date===today?'Today · ':''}${nice(date)}</div>${eventsOn(date).map(s=>{const w=DB.workouts.find(x=>x.id===s.workoutId);return `<div class="week-event"><div class="ev-time">${esc(s.time)}<small>${s.minutes} min</small></div><div class="ev-body"><b>${esc(w.name)}</b><div class="builder-actions"><button class="btn sm" onclick="startSavedWorkout('${w.id}','${s.id}','${date}')">Start</button><button class="btn2 sm" onclick="openSchedule('${w.id}','${s.id}')">Reschedule</button><button class="btn2 sm danger" onclick="removeSchedule('${s.id}',this)">Remove</button></div></div></div>`}).join('')}</div>`).join(''):`<div class="empty-state"><b>Nothing scheduled this week</b><span>Save a workout, then tap Schedule to plan your days.</span></div>`}
+    <p class="small muted">Tip: add your schedule to your phone's calendar to get a reminder 15 minutes before each workout.</p></section>`;
 }
 function programSection(){
   return `<section class="card"><h2>Multi-week programs</h2><p class="small muted">Programs use your profile goal and equipment, with editable saved sessions. Levels describe template volume, not a medical assessment; loads do not increase automatically.</p>

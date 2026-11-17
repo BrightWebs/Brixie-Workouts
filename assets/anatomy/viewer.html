@@ -3,36 +3,47 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Rebuild anatomical muscle views</title>
+  <title>Rebuild muscle view</title>
   <style>
-    *{box-sizing:border-box}body{margin:0;color:#e8edf2;background:#10151c;font:13px system-ui,sans-serif}
-    #stage{position:relative;height:360px;background:radial-gradient(ellipse at 50% 45%,#26303b 0%,#10151c 70%);overflow:hidden}
-    canvas{display:block;width:100%;height:100%}.labels{position:absolute;inset:12px 0 auto;display:flex;justify-content:space-around;pointer-events:none;color:#aab8c8;font-size:10px;letter-spacing:2px;text-transform:uppercase}
-    #status{position:absolute;inset:0;display:grid;place-content:center;text-align:center;padding:20px;line-height:1.6;background:#10151c}
-    #status[hidden]{display:none}#status button{margin:10px auto}
-    .tools{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;padding:10px 6px}
-    button{font:inherit;background:#202a35;color:inherit;border:1px solid #3b4858;border-radius:20px;padding:7px 12px;cursor:pointer}
-    button[aria-pressed=true]{border-color:#c8f135;color:#c8f135}button:focus-visible{outline:2px solid #c8f135;outline-offset:2px}
-    #selection{margin:0;text-align:center;color:#aab8c8;font-size:11px;min-height:28px;padding:0 12px}
-    @media(min-width:500px){#stage{height:400px}}
-    @media(max-width:240px){#stage{height:320px}.labels{font-size:8px;letter-spacing:.5px}.tools button{font-size:11px;padding:7px 8px}}
-    @media(prefers-reduced-motion:no-preference){button{transition:color .15s,border-color .15s}}
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;color:#eef2f6;background:#0b0e13;font:13px Inter,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+    #stage{position:relative;height:100%;min-height:340px;background:radial-gradient(ellipse 75% 62% at 50% 40%,#2a3646 0%,#151c26 55%,#0a0e14 100%);overflow:hidden;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+    canvas{display:block;width:100%;height:100%;cursor:grab}
+    canvas:active{cursor:grabbing}
+    .targets{position:absolute;top:10px;left:10px;right:10px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;pointer-events:none}
+    .targets button{pointer-events:auto;font:inherit;font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#fff;background:rgba(10,13,18,.55);border:1.5px solid rgba(255,255,255,.14);border-radius:10px;padding:6px 10px;cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:border-color .2s,box-shadow .2s}
+    .targets button.p{border-color:#ff7a3c;box-shadow:0 0 14px rgba(255,110,50,.45)}
+    .targets button.s{border-color:rgba(255,160,120,.45)}
+    .targets button.on{background:rgba(255,120,60,.18)}
+    .label{position:absolute;left:50%;bottom:54px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;white-space:nowrap;pointer-events:none}
+    .label b{font-size:15px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;text-shadow:0 0 18px rgba(255,140,90,.6)}
+    .label span{font-size:11px;font-weight:700;color:#0b0e13;background:#ffd166;border-radius:999px;padding:3px 9px}
+    .label span.s{background:#ffb199}.label span.n{background:#9aa6b6}
+    .tools{position:absolute;left:0;right:0;bottom:10px;display:flex;gap:6px;justify-content:center}
+    .tools button{font:inherit;font-size:12px;font-weight:600;color:#e8edf2;background:rgba(18,23,30,.72);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:7px 12px;cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+    .tools button[aria-pressed=true]{border-color:#c8f135;color:#c8f135}
+    button:focus-visible{outline:2px solid #c8f135;outline-offset:2px}
+    .hint{position:absolute;top:50%;right:10px;transform:translateY(-50%);writing-mode:vertical-rl;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.28);text-transform:uppercase;pointer-events:none}
+    #status{position:absolute;inset:0;display:grid;place-content:center;text-align:center;padding:20px;line-height:1.6;color:#aab8c8}
+    #status[hidden]{display:none}
+    #status .spin{width:28px;height:28px;margin:0 auto 10px;border-radius:50%;border:3px solid rgba(255,255,255,.12);border-top-color:#ff8a4c;animation:sp 1s linear infinite}
+    @keyframes sp{to{transform:rotate(360deg)}}
+    @media(prefers-reduced-motion:reduce){#status .spin{animation:none}}
   </style>
   <script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
 </head>
 <body>
   <div id="stage">
-    <canvas aria-label="Three-dimensional front and back muscle anatomy"></canvas>
-    <div class="labels"><span>Anterior / front</span><span>Posterior / back</span></div>
-    <div id="status" role="status">Loading licensed 3D anatomy...</div>
+    <canvas aria-label="3D body with the worked muscles glowing"></canvas>
+    <div class="targets" id="targets" aria-label="Target muscles"></div>
+    <div class="label" id="label" aria-live="polite"></div>
+    <div class="hint">Drag to turn</div>
+    <div class="tools" aria-label="View">
+      <button data-mode="orbit" aria-pressed="true">3D view</button>
+      <button data-mode="split" aria-pressed="false">Front + back</button>
+    </div>
+    <div id="status" role="status"><div><div class="spin"></div>Loading 3D body…</div></div>
   </div>
-  <div class="tools" aria-label="Anatomy view controls">
-    <button data-angle="0" aria-pressed="true">Front + back</button>
-    <button data-angle="0.55" aria-pressed="false">Three-quarter</button>
-    <button data-angle="1.57079632679" aria-pressed="false">Side views</button>
-    <button id="isolate" aria-pressed="false">Isolate targets</button>
-  </div>
-  <p id="selection" aria-live="polite"></p>
   <script type="module" src="./viewer.js"></script>
 </body>
 </html>

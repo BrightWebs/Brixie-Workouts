@@ -257,15 +257,12 @@ select.field{appearance:none;-webkit-appearance:none;background-image:linear-gra
 .goal-card:hover{transform:translateY(-2px);border-color:var(--ac)}
 .goal-card[aria-pressed="true"]{border-color:var(--ac);background:#242e15}
 .goal-card b,.goal-card span{display:block}
-.goal-card .goal-number{color:var(--ac);font:700 26px "Barlow Condensed",sans-serif;margin-bottom:8px}
-.goal-card span{font-size:12px;color:var(--mu);margin-top:5px}
+.goal-card .goal-card span{font-size:12px;color:var(--mu);margin-top:5px}
 .journey-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .journey-options .field{min-width:0}
 .muscle-panel{background:var(--s2);border:1px solid var(--ln);border-radius:16px;padding:14px;margin:12px 0}
-.anatomy-frame{display:block;width:100%;height:520px;border:1px solid var(--ln);border-radius:14px;margin:12px 0;background:#10151c}
-.anatomy-credit{font-size:10px;line-height:1.6;color:var(--mu)}
-.anatomy-credit a{color:inherit;text-decoration:underline}
-@media(min-width:530px){.anatomy-frame{height:490px}}
+.anatomy-frame{display:block;width:100%;height:540px;border:0;border-radius:18px;margin:12px 0;background:#0e131a;box-shadow:0 10px 30px rgba(10,14,20,.18)}
+@media(min-width:530px){.anatomy-frame{height:560px}}
 .muscle-views{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:320px;margin:12px auto}
 .muscle-view{text-align:center;font-size:11px;color:var(--mu)}
 .muscle-view svg{display:block;width:100%;height:220px}
@@ -317,6 +314,34 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var
   .print-guide{display:block}
 }
 @media (min-width:600px){.app{padding-top:28px}}
+.sec-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:22px 2px 10px}
+.card .sec-head{margin:0 0 12px}
+.goal-card .goal-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:var(--s3);font-size:20px;margin-bottom:8px}
+.goal-card[aria-pressed=true] .goal-icon{background:rgba(200,241,53,.16)}
+.starter{margin-top:14px;padding:14px;border-radius:14px;background:var(--s2);border:1px solid var(--ln)}
+.starter-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.starter-list{margin:8px 0 0}
+.week-nav{display:flex;align-items:center;gap:6px;margin:14px 0 6px}
+.icon-btn{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--ln);background:var(--s2);font-size:20px;line-height:1;display:grid;place-items:center}
+.week-strip{flex:1;display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.wday{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0 6px;border-radius:12px;background:var(--s2)}
+.wday span{font-size:10.5px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.4px}
+.wday b{font-family:"Barlow Condensed",Inter,sans-serif;font-size:19px;line-height:1}
+.wday i{width:5px;height:5px;border-radius:50%;background:transparent}
+.wday.has i{background:var(--ac)}
+.wday.today{background:var(--ac);color:var(--ink)}
+.wday.today span{color:var(--ink)}
+.wday.today.has i{background:var(--ink)}
+.link-btn{background:none;border:0;padding:4px 2px;color:var(--ac);font-size:13px;font-weight:600}
+.day-block{margin-top:14px}
+.day-label{font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--mu);margin-bottom:8px}
+.week-event{display:flex;gap:12px;padding:12px;border-radius:14px;background:var(--s2);border:1px solid var(--ln);margin-bottom:8px}
+.ev-time{flex:none;min-width:58px;font-family:"Barlow Condensed",Inter,sans-serif;font-size:20px;font-weight:700;line-height:1.05}
+.ev-time small{display:block;font-family:Inter,sans-serif;font-size:11px;font-weight:500;color:var(--mu)}
+.ev-body{flex:1;min-width:0}
+.ev-body .builder-actions{margin-top:8px}
+.empty-state{display:flex;flex-direction:column;gap:4px;text-align:center;padding:22px 12px;margin-top:12px;border-radius:14px;border:1px dashed var(--ln);color:var(--mu);font-size:13px}
+.empty-state b{color:var(--tx);font-size:15px}
 </style>
 </head>
 <body>
@@ -877,29 +902,29 @@ function useStarterPlan(){
 }
 function vHome(){
   const p=DB.preferences,g=JOURNEYS[p.goal],ids=starterPlan();
-  return `<header class="top"><div><div class="eyebrow">Move with a purpose</div><h2>Rebuild</h2></div><button class="avatar" onclick="go('profile')" aria-label="Profile">${IC.user}</button></header>
-    <section class="welcome"><div class="eyebrow" style="color:var(--ac)">Your next chapter starts here</div><h1>A plan that starts<br>where you are.</h1><p class="muted">Find your focus. Learn the equipment. See the muscles at work. Build a routine you can return to.</p>
-    <div class="row2"><button class="btn" onclick="document.getElementById('chooseGoal').scrollIntoView({behavior:'smooth'})">Find my starting point</button><button class="btn2" onclick="go('today')">My workout</button></div></section>
-    <section id="chooseGoal"><div class="eyebrow">01 / Your direction</div><h2 style="margin-top:5px">What brings you here?</h2><p class="small muted">Change your goal any time. Choosing a goal does not erase your plan or workout history.</p>
-    <div class="goal-grid">${Object.entries(JOURNEYS).map(([id,j],i)=>`<button class="goal-card" aria-pressed="${id===p.goal}" onclick="chooseJourney('${id}')"><span class="goal-number">0${i+1}</span><b>${esc(j.name)}</b><span>${esc(j.desc)}</span></button>`).join('')}</div></section>
-    <section class="card"><div class="eyebrow">02 / Make it yours</div><h2 style="margin:5px 0 15px">${esc(g.name)}</h2>
-    <div class="journey-options"><label class="f"><span>Training experience</span><select class="field" onchange="setPreference('experience',this.value)">${[['new','New to training'],['returning','Returning after a break'],['regular','Training regularly']].map(([id,name])=>`<option value="${id}" ${id===p.experience?'selected':''}>${name}</option>`).join('')}</select></label>
+  const ICONS={return:'🔁',weight:'⚖️',muscle:'💪',strength:'🏋️',focus:'🎯'};
+  const done=DB.sessions.length,week=thisWeekCount();
+  return `<header class="top"><div><div class="eyebrow">${greet()}</div><h2>Rebuild</h2></div><button class="avatar" onclick="go('profile')" aria-label="Profile">${IC.user}</button></header>
+    <section class="welcome"><div class="eyebrow" style="color:var(--ac)">${done?`${done} workout${done===1?'':'s'} logged · ${week} this week`:'Welcome'}</div><h1>${done?'Ready for<br>the next one?':'Your plan,<br>your pace.'}</h1>
+    <p class="muted">${done?'Pick up where you left off, or try something new.':'Pick a goal, learn the equipment and build a routine you can stick with.'}</p>
+    <div class="row2"><button class="btn" onclick="go('today')">${IC.play} Start workout</button><button class="btn2" onclick="go('planner')">Plan a workout</button></div></section>
+    <section id="chooseGoal"><div class="sec-head"><h3>Your goal</h3><span class="small muted">Change any time</span></div>
+    <div class="goal-grid">${Object.entries(JOURNEYS).map(([id,j])=>`<button class="goal-card" aria-pressed="${id===p.goal}" onclick="chooseJourney('${id}')"><span class="goal-icon" aria-hidden="true">${ICONS[id]||'•'}</span><b>${esc(j.name)}</b><span>${esc(j.desc)}</span></button>`).join('')}</div></section>
+    <section class="card"><div class="sec-head"><h3>Make it yours</h3><span class="chip k">${esc(g.name)}</span></div>
+    <div class="journey-options"><label class="f"><span>Experience</span><select class="field" onchange="setPreference('experience',this.value)">${[['new','New to training'],['returning','Returning after a break'],['regular','Training regularly']].map(([id,name])=>`<option value="${id}" ${id===p.experience?'selected':''}>${name}</option>`).join('')}</select></label>
     <label class="f"><span>Session time</span><select class="field" onchange="setPreference('duration',this.value)">${[30,45,60].map(v=>`<option value="${v}" ${v===p.duration?'selected':''}>${v} minutes</option>`).join('')}</select></label></div>
     ${p.goal==='focus'?`<label class="f"><span>Your emphasis</span><select class="field" onchange="setPreference('focus',this.value)">${[['upper','Upper body'],['lower','Lower body'],['core','Core']].map(([id,name])=>`<option value="${id}" ${id===p.focus?'selected':''}>${name}</option>`).join('')}</select></label>`:''}
-    <details class="how"><summary>My available equipment</summary>${equipmentPicker(p.equipment,'setAvailableEquipment')}<p class="small muted">Guided and quick workouts in My Workouts use these saved preferences.</p></details>
-    <p class="small muted">${esc(g.guide)}</p><p class="small muted">${p.experience==='regular'?'Longer templates add accessory work.':'New and returning templates stay shorter, leaving room to learn equipment and recover.'} The original starter plan below assumes common gym equipment; My Workouts can generate using your equipment choices.</p>
-    <div class="chips"><span class="chip k">~${Math.round(starterMinutes(ids))} min including rest</span><span class="chip">${ids.length} moves</span><span class="chip">${p.duration} min available</span></div>
-    <p class="small">${ids.map(id=>esc(EXI[id].name)).join(' &middot; ')}</p>
-    <button class="btn" onclick="useStarterPlan()" ${ACTIVE?'disabled style="opacity:.5"':''}>${ACTIVE?'Finish active workout to use this plan':'Use this starter plan'}</button><p class="small muted">Replaces your selected moves only when you press this button. Your history, charts and profile stay intact.</p></section>
-    <section class="card"><div class="eyebrow">03 / Learn before you lift</div><h2 style="margin-top:5px">Know your next move.</h2>${muscleMap(EXI.goblet)}
-    <div class="row2"><button class="btn2" onclick="go('machines')">Equipment & QR lookup</button><button class="btn2" onclick="openEx('tread')">Explore a warm-up</button></div>
-    <p class="small muted">Explore openly licensed 3D anatomy alongside exercise setup, breathing and safety notes. Club equipment varies; check the actual machine label.</p></section>
-    <section class="card"><h3>A sustainable baseline</h3><p class="small muted">CDC guidance for adults is at least 150 minutes of moderate aerobic activity each week and muscle-strengthening activity on at least 2 days. Start with what you can manage and build gradually. A starter session is not a complete weekly prescription.</p>
-    <p class="small muted">This site is general exercise education, not medical advice or a personalized treatment plan. Ask a qualified professional about injuries, health conditions or unfamiliar equipment.</p>
-    <details class="how source-links"><summary>Research & reference links</summary><p class="small muted">Product patterns informed goal selection, equipment discovery and muscle maps. The 3D anatomy is openly licensed from Z-Anatomy / BodyParts3D via Fit Mit With; see the credits beneath each model. Schematic movement guides remain original illustrations, separate from the anatomy model.</p>
-    <a href="https://fitbod.me/" target="_blank" rel="noopener">Fitbod: goal and equipment-based workout discovery</a><a href="https://www.nike.com/ntc-app" target="_blank" rel="noopener">Nike Training Club: guided workout categories</a><a href="https://musclewiki.com/" target="_blank" rel="noopener">MuscleWiki: muscle-based exercise discovery</a>
-    <a href="https://www.planetfitness.com/mobileapp" target="_blank" rel="noopener">Planet Fitness: official app and equipment tutorials</a><a href="https://www.cdc.gov/physical-activity-basics/guidelines/adults.html" target="_blank" rel="noopener">CDC: adult physical activity guidelines</a><a href="https://www.cdc.gov/physical-activity-basics/benefits/physical-activity-and-your-weight.html" target="_blank" rel="noopener">CDC: activity and weight management</a></details></section>
-    <p class="small muted" style="text-align:center">Your data stays in this browser. Back up your progress in Profile.</p>`;
+    <details class="how"><summary>Equipment I can use</summary>${equipmentPicker(p.equipment,'setAvailableEquipment')}</details>
+    <div class="starter"><div class="starter-top"><div><b>Suggested starter session</b><div class="small muted">~${Math.round(starterMinutes(ids))} min · ${ids.length} moves</div></div></div>
+    <p class="small muted starter-list">${ids.map(id=>esc(EXI[id].name)).join(' · ')}</p>
+    <button class="btn" onclick="useStarterPlan()" ${ACTIVE?'disabled style="opacity:.5"':''}>${ACTIVE?'Finish your current workout first':'Use this session'}</button></div>
+    <p class="small muted">${esc(g.guide)}</p></section>
+    <section class="card"><div class="sec-head"><h3>See the muscles at work</h3></div>${muscleMap(EXI.goblet)}
+    <div class="row2"><button class="btn2" onclick="go('machines')">Gym equipment & QR</button><button class="btn2" onclick="openEx('tread')">Explore a warm-up</button></div></section>
+    <details class="how source-links"><summary>Health note & sources</summary><p class="small muted">Adults are encouraged to get at least 150 minutes of moderate activity a week plus muscle-strengthening on 2 or more days (CDC). This app is general exercise education, not medical advice. Ask a professional about injuries or health conditions.</p>
+    <a href="https://fitbod.me/" target="_blank" rel="noopener">Fitbod</a><a href="https://www.nike.com/ntc-app" target="_blank" rel="noopener">Nike Training Club</a><a href="https://musclewiki.com/" target="_blank" rel="noopener">MuscleWiki</a>
+    <a href="https://www.planetfitness.com/mobileapp" target="_blank" rel="noopener">Planet Fitness app and equipment tutorials</a><a href="https://www.cdc.gov/physical-activity-basics/guidelines/adults.html" target="_blank" rel="noopener">CDC: adult activity guidelines</a><a href="https://www.cdc.gov/physical-activity-basics/benefits/physical-activity-and-your-weight.html" target="_blank" rel="noopener">CDC: activity and weight</a></details>
+    <p class="small muted" style="text-align:center;margin-top:14px">Your data stays on this device. Back it up in Profile.</p>`;
 }
 
 const MUSCLE_REGIONS={
@@ -946,16 +971,45 @@ Object.assign(EX_TARGETS,{
  barrdl:[['hamstrings','glutes'],['erectors','forearms']],airbike:[['quads','glutes'],['shoulders','biceps']],
  spinbike:[['quads','glutes'],['calves','hamstrings']],arcstride:[['quads','glutes'],['hamstrings','calves']]
 });
-function muscleMap(e,targets=EX_TARGETS[e.id],interactive=false){
+// Exact muscles each exercise lights on the 3D body (anatomy references: ExRx.net, Kenhub). EX_TARGETS stays the
+// broad region list used for filtering and planning; this only refines what the body shows and names.
+const MUSCLE_DETAIL={chest:'Chest (pecs)',frontdelt:'Front delts',sidedelt:'Side delts',reardelt:'Rear delts',biceps:'Biceps',
+ triceps:'Triceps',forearms:'Forearms',abs:'Upper abs',lowerabs:'Lower abs',obliques:'Obliques',serratus:'Serratus',quads:'Quadriceps',
+ adductors:'Inner thighs',hips:'Hip flexors',calves:'Calves',lats:'Lats',traps:'Traps',upperback:'Rhomboids & teres',
+ erectors:'Spinal erectors',glutes:'Glute max',glutemed:'Glute medius',hamstrings:'Hamstrings'};
+const EX_DETAIL={
+ row:[['quads','glutes','lats','upperback'],['hamstrings','biceps','reardelt','erectors','abs']],
+ finrow:[['quads','glutes','lats','upperback'],['hamstrings','biceps','reardelt','erectors','abs']],
+ armc:[['frontdelt','sidedelt','reardelt'],['traps']],
+ chest:[['chest'],['frontdelt','triceps']],pecdeck:[['chest'],['frontdelt']],cablefly:[['chest'],['frontdelt']],
+ pushup:[['chest'],['triceps','frontdelt','abs','serratus']],chestst:[['chest'],['frontdelt']],
+ spress:[['frontdelt','sidedelt'],['triceps','traps','abs']],machinepress:[['frontdelt','sidedelt'],['triceps','traps']],
+ lat:[['lats'],['biceps','upperback','reardelt','forearms']],assist:[['lats'],['biceps','upperback','forearms']],
+ crow:[['lats','upperback','traps'],['biceps','reardelt','forearms']],supportedrow:[['lats','upperback','traps'],['biceps','reardelt','forearms']],
+ trxrow:[['lats','upperback','traps'],['biceps','reardelt','abs']],bandrow:[['lats','upperback','traps'],['biceps','reardelt']],
+ plank:[['abs','lowerabs','obliques'],['frontdelt','glutes','serratus']],dbug:[['abs','lowerabs'],['hips','obliques']],
+ abcrunch:[['abs'],['lowerabs','obliques']],chop:[['obliques','serratus'],['abs','frontdelt','hips']],
+ hipabd:[['glutemed'],['glutes']],hipthrust:[['glutes'],['hamstrings','glutemed','abs']],bridge:[['glutes'],['hamstrings','glutemed','abs']],
+ bsq:[['quads','glutes'],['adductors','abs']],goblet:[['quads','glutes'],['adductors','abs','erectors']],squatbw:[['quads','glutes'],['adductors','abs']],
+ lunge:[['quads','glutes'],['glutemed','hips','hamstrings','abs']],smith:[['quads','glutes'],['adductors','abs','erectors']],
+ rdl:[['hamstrings','glutes'],['erectors','forearms']],barrdl:[['hamstrings','glutes'],['erectors','forearms','traps']],
+ backext:[['erectors'],['glutes','hamstrings']],catcow:[['erectors','abs'],[]],
+ xbody:[['reardelt'],['upperback']],child:[['lats','erectors'],['hips','glutes']],
+ ropes:[['frontdelt','sidedelt'],['forearms','abs','quads']],airbike:[['quads','glutes'],['frontdelt','biceps']],
+ inch:[['hamstrings','abs'],['frontdelt','calves']],legs:[['hips','hamstrings'],['glutes']],
+ tread:[['quads','glutes','calves'],['hamstrings','hips']],finwalk:[['quads','glutes','calves'],['hamstrings','hips']]
+};
+const muscleLabel=id=>MUSCLE_DETAIL[id]||MUSCLE_REGIONS[id]?.label||id;
+function muscleMap(e,targets,interactive=false){
+  targets=targets||EX_DETAIL[e.id]||EX_TARGETS[e.id];
   if(!targets)return'';
-  const [primary,secondary]=targets,labels=ids=>ids.map(id=>MUSCLE_REGIONS[id].label).join(', ');
-  const mode=e.sec==='cool'?'Stretch emphasis':e.sec==='mob'?'Movement emphasis':e.sec==='warm'||e.sec==='fin'?'Active muscle groups':'Primary muscles';
-  const query=`primary=${encodeURIComponent(primary.join(','))}&secondary=${encodeURIComponent(secondary.join(','))}&interactive=${interactive?1:0}`;
-  return `<section class="muscle-panel"><h3>Muscles in this move</h3><iframe class="anatomy-frame" loading="lazy" src="assets/anatomy/viewer.html?${query}" title="3D front and back muscle anatomy for ${esc(e.name)}"></iframe>
-    <div class="muscle-legend"><span><i></i>${esc(mode)}</span><span class="support"><i></i>Supporting / also involved</span></div>
+  const [primary,secondary]=targets,labels=ids=>ids.map(muscleLabel).join(', ');
+  const mode=e.sec==='cool'?'Stretched':e.sec==='mob'?'Moved':e.sec==='warm'||e.sec==='fin'?'Working':'Primary';
+  const query=`primary=${encodeURIComponent(primary.join(','))}&secondary=${encodeURIComponent(secondary.join(','))}&interactive=${interactive?1:0}&mode=${encodeURIComponent(mode)}`;
+  return `<section class="muscle-panel"><iframe class="anatomy-frame" loading="lazy" src="assets/anatomy/viewer.html?${query}" title="Muscles worked: ${esc(labels(primary))}"></iframe>
+    <div class="muscle-legend"><span><i></i>${esc(mode)}</span>${secondary.length?'<span class="support"><i></i>Also involved</span>':''}</div>
     <p class="small"><b>${esc(mode)}:</b> ${esc(labels(primary))}${secondary.length?`<br><b>Also involved:</b> ${esc(labels(secondary))}`:''}</p>
-    <p class="small muted">3D anatomical reference, not an exercise animation. Highlights identify broad target groups, not measured activation. Use Isolate targets to reveal deeper muscles, including spinal extensors; not every target is visible from every view.${e.sec==='warm'||e.sec==='fin'?' Aerobic involvement is not equivalent to resistance training.':''}${e.sec==='cool'||e.sec==='mob'?' These regions are moved or stretched, not a claim of muscle growth.':''}</p>
-    <p class="anatomy-credit">Atlas adapted by Fit Mit With from <a href="https://github.com/Z-Anatomy/Models-of-human-anatomy" target="_blank" rel="noopener">Z-Anatomy</a> / BodyParts3D. <a href="assets/anatomy/credits.html" target="_blank" rel="noopener">Credits, source &amp; CC BY-SA 4.0 license</a>. Display changes: neutral shading, light-red highlights, paired camera views and featureless heads.</p></section>`;
+    ${interactive?'<p class="small muted">Tap muscles on the body to add or remove targets.</p>':''}</section>`;
 }
 window.addEventListener('message',event=>{
   if(event.origin!==location.origin||event.data?.type!=='rebuild:select-muscle')return;
@@ -1053,7 +1107,7 @@ function exerciseDemo(e){
 
 /* ================= routing ================= */
 let VIEW='home';
-const TABS=[['home','Home','house'],['planner','Planner','flag'],['today','Workout','home'],['machines','Machines','machines'],['progress','Progress','chart'],['goals','Goals','flag'],['profile','Profile','user']];
+const TABS=[['home','Home','house'],['today','Workout','home'],['planner','Plan','flag'],['machines','Gym','machines'],['progress','Progress','chart']];
 function go(v){if(VIEW==='machines'&&v!=='machines')stopScan();VIEW=v;render();const root=$('#view');root.classList.remove('page-enter');void root.offsetWidth;root.classList.add('page-enter');window.scrollTo(0,0)}
 function render(){
   document.body.dataset.view=VIEW;
@@ -1284,7 +1338,7 @@ function renderMachines(){
   const root=$('#machineResults');if(!root)return;
   const q=MACHINE_QUERY.trim().toLowerCase();
   const list=MACHINES.filter(m=>(MACHINE_CATEGORY==='all'||m.category===MACHINE_CATEGORY)&&`${m.name} ${m.category} ${m.aliases||''} ${machineMuscles(m)} ${m.setup}`.toLowerCase().includes(q));
-  root.innerHTML=list.map(m=>`<article class="catalog-card"><div class="row"><span class="chip k">${esc(m.category)}</span><span class="code">${esc(machineCode(m))}</span></div>
+  root.innerHTML=list.map(m=>`<article class="catalog-card"><div class="row"><span class="chip k">${esc(m.category)}</span></div>
     <div class="fig">${m.exercise?animSVG(m.exercise):machineSketch(m)}</div><h3>${esc(m.name)}</h3><p class="small muted">${esc(machineMuscles(m))}</p>${m.example?'<p class="small muted">Example movement; other uses may differ.</p>':''}<button class="btn2 sm" onclick="openMachine('${m.id}')">Setup & instructions</button></article>`).join('')||'<div class="card empty">No matching equipment. Try a muscle group, category or alternate name.</div>';
   mountAnims(root);
   if(MACHINE_ACTIVE)renderMachineDetail(MACHINE_ACTIVE);
