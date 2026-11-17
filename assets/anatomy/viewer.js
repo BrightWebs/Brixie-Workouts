@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { buildSkeleton, applyFrame, applyClip, holdAtChest } from './motion.js?v=20261116g';
 import { buildProps } from './props.js?v=20261116g';
+import { CHOREO, poseAt as choreoPose, applyPose } from './choreo.js?v=20261116g';
 
 /* Rebuild muscle view: a gray studio mannequin whose worked muscles glow
    (hot orange core, cool blue-white edge), like a training-app demo render.
@@ -260,7 +261,9 @@ function progressOf(F) {
   const mx = Math.max(...d, 1e-6); return d.map(v => v / mx);
 }
 let PROG = null, CLIP = null;
+const CH = TRACK && !TRACK.opt?.clip ? CHOREO[TRACK.id] : null;
 function poseAtPhase(p) {
+  if (CH) { applyPose(rig, choreoPose(CH, p)); if (props) props.update(); return; }
   if (CLIP) { applyClip(rig, CLIP, p); if (TRACK.opt.lift) { rig.root.position.y += TRACK.opt.lift; rig.root.updateMatrixWorld(true); } if (TRACK.opt.hold === 'chest') holdAtChest(rig); if (props) props.update(); return; }
   const F = TRACK.frames, n = F.length, x = ((p % 1) + 1) % 1 * n, i = Math.floor(x) % n, t = x - Math.floor(x);
   PROG = PROG || progressOf(F);
@@ -269,7 +272,8 @@ function poseAtPhase(p) {
   if (props) props.update();
 }
 let paused = false;
-function animate(now) { if (!paused) poseAtPhase(now / (CLIP ? CLIP.frames / CLIP.fps * 1000 * (TRACK.opt.slow || 1) : TRACK.period || 3000)); }
+const fixedPhase = params.has('phase') ? +params.get('phase') : null;
+function animate(now) { if (fixedPhase !== null) { poseAtPhase(fixedPhase); return; } if (!paused) poseAtPhase(now / (CH ? CH.period : CLIP ? CLIP.frames / CLIP.fps * 1000 * (TRACK.opt.slow || 1) : TRACK.period || 3000)); }
 function setMode(next) {
   mode = next;
   document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
@@ -378,7 +382,7 @@ try {
 
   const firstAsked = askedPrimary.find(g => GROUP_NAMES[g] || NAMES[g]);
   const firstPrimary = [...primary].find(g => NAMES[g]);
-  targetAngle = angle = fixedView ?? (rig ? (TRACK.opt?.view ?? .7) : firstPrimary ? FACING[firstPrimary] ?? 0 : 0);
+  targetAngle = angle = fixedView ?? (rig ? (CH?.view ?? TRACK.opt?.view ?? .7) : firstPrimary ? FACING[firstPrimary] ?? 0 : 0);
   buildChips();
   setLabel(firstAsked ? GROUP_NAMES[firstAsked] || NAMES[firstAsked] : '', firstAsked ? modeWord : '');
   if (explore) { labelEl.innerHTML = '<b style="font-size:13px">Tap a muscle</b>'; document.querySelector('.hint').textContent = 'Drag to turn · tap a muscle'; }

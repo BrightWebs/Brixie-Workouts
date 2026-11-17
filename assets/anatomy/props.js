@@ -215,20 +215,20 @@ export function buildProps(id, equip, rig) {
     case 'chest': {
       seatPad(root, mk); backPad(root, mk, { h: m(.72) });
       const tower = stackTower(root, v3(m(.62), 0, mk.hipC.z - m(.45)), m(1.35), -Math.PI / 2 + .3);
-      const pivotY = mk.shC.y + m(.32), pivotZ = mk.shC.z - m(.05);
+      const pivotY = mk.shC.y - m(.12), pivotZ = mk.shC.z - m(.22);
       for (const s of ['R', 'L']) {
         const sx = s === 'R' ? 1 : -1, h = handle(m(.15)), lever = beam(v3(), v3(0, 1, 0), m(.055), k.frameLight); root.add(lever);
-        const hub = mesh(new THREE.CylinderGeometry(m(.05), m(.05), m(.08), 20), k.frame); hub.rotation.z = Math.PI / 2; hub.position.set(sx * m(.38), pivotY, pivotZ); root.add(hub);
+        const hub = mesh(new THREE.CylinderGeometry(m(.05), m(.05), m(.08), 20), k.frame); hub.rotation.z = Math.PI / 2; hub.position.set(sx * m(.44), pivotY, pivotZ); root.add(hub);
         later(() => { const g = grip(s); h.position.copy(g); h.rotation.set(Math.PI / 2, 0, 0);
-          const top = v3(sx * m(.38), pivotY, pivotZ), elbowPt = v3(g.x + sx * m(.1), g.y, g.z);
+          const top = v3(sx * m(.44), pivotY, pivotZ), elbowPt = v3(g.x + sx * m(.07), g.y, g.z);
           lever.position.copy(top).add(elbowPt).multiplyScalar(.5); lever.scale.set(1, top.distanceTo(elbowPt), 1);
           lever.quaternion.setFromUnitVectors(v3(0, 1, 0), elbowPt.clone().sub(top).normalize()); });
       }
       const run = cableRun(root, [0, 0, 0]);
       later(() => run([tower.stackTop(), tower.pulleyWorld(), v3(0, pivotY, pivotZ)]));
       stackFollow(tower, () => grip('R'), .55);
-      root.add(beam(v3(-m(.38), pivotY, pivotZ), v3(m(.38), pivotY, pivotZ), m(.06), k.frame));
-      for (const x of [-1, 1]) root.add(beam(v3(x * m(.38), .02, pivotZ - m(.12)), v3(x * m(.38), pivotY, pivotZ), m(.07), k.frame));
+      for (const x of [-1, 1]) root.add(beam(v3(x * m(.5), .02, pivotZ - m(.05)), v3(x * m(.5), pivotY + m(.05), pivotZ), m(.07), k.frame));
+      root.add(beam(v3(-m(.5), pivotY + m(.05), pivotZ), v3(m(.5), pivotY + m(.05), pivotZ), m(.06), k.frame));
       break;
     }
     case 'pecdeck': {
@@ -349,7 +349,7 @@ export function buildProps(id, equip, rig) {
       break;
     }
     case 'backext': {
-      const hipPad = pad(m(.4), m(.09), m(.2)); hipPad.position.copy(mk.hipC).add(v3(0, -m(.02), m(.1))); hipPad.rotation.x = -.6; root.add(hipPad);
+      const hipPad = pad(m(.4), m(.09), m(.22)); hipPad.position.copy(mk.hipC).add(v3(0, -m(.13), m(.11))); hipPad.rotation.x = .8; root.add(hipPad);
       const ank = mesh(new THREE.CylinderGeometry(m(.05), m(.05), m(.3), 20), k.pad); ank.rotation.z = Math.PI / 2; ank.position.copy(mk.ankR).add(v3(0, m(.06), -m(.06))); ank.position.x = 0; root.add(ank);
       const plat = mesh(roundedBox(m(.42), m(.03), m(.3), m(.01)), k.rubber); plat.position.set(0, m(.02), mk.ankR.z + m(.05)); root.add(plat);
       root.add(beam(v3(0, m(.03), mk.ankR.z), hipPad.position.clone().add(v3(0, -m(.1), -m(.05))), m(.09), k.frame));
@@ -359,7 +359,7 @@ export function buildProps(id, equip, rig) {
     }
     case 'hipthrust': case 'bridge': {
       if (id === 'hipthrust') {
-        const bench = pad(m(.45), m(.42), m(1.1)); bench.position.set(0, m(.21), mk.shC.z - m(.55)); root.add(bench);
+        const bench = pad(m(1.15), m(.42), m(.38)); bench.position.set(0, m(.21), mk.shC.z - m(.12)); root.add(bench);
         const bar = new THREE.Group(); bar.add(tube(v3(-m(.75), 0, 0), v3(m(.75), 0, 0), m(.014), k.knurl));
         const sleeve = s => tube(v3(s * m(.75), 0, 0), v3(s * m(1.05), 0, 0), m(.025), k.chrome); bar.add(sleeve(-1), sleeve(1));
         for (const s of [-1, 1]) { const pl = mesh(new THREE.CylinderGeometry(m(.225), m(.225), m(.05), 48), k.rubber); pl.rotation.z = Math.PI / 2; pl.position.x = s * m(.82); bar.add(pl); }
@@ -469,6 +469,14 @@ export function buildProps(id, equip, rig) {
       const anchor = v3(0, m(2.3), mk.ankR.z + m(.7)); const run = [cableRun(root, [0, 0]), cableRun(root, [0, 0])];
       const plate = mesh(roundedBox(m(.2), m(.06), m(.06), m(.01)), k.frame); plate.position.copy(anchor); root.add(plate);
       for (const s of ['R', 'L']) { const h = handle(m(.12)); later(() => { h.position.copy(grip(s)); h.rotation.set(0, 0, Math.PI / 2); run[s === 'R' ? 0 : 1]([anchor, h.position]); }); }
+      break;
+    }
+    case 'quad': case 'legs': case 'chestst': {
+      const wall = new THREE.MeshStandardMaterial({ color: 0x2a313b, roughness: .85 });
+      if (id === 'quad') { const w = mesh(new THREE.BoxGeometry(m(1.6), m(2.2), m(.06)), wall); w.position.set(0, m(1.1), m(.6)); root.add(w); }
+      else if (id === 'legs') { const w = mesh(new THREE.BoxGeometry(m(.06), m(2.2), m(1.6)), wall); w.position.set(-m(.7), m(1.1), 0); root.add(w); }
+      else { for (const z of [-m(.1), m(.06)]) { const post = mesh(new THREE.BoxGeometry(m(.1), m(2.1), m(.08)), k.frameLight); post.position.set(-m(.72), m(1.05), z); root.add(post); }
+        const head = mesh(new THREE.BoxGeometry(m(.1), m(.1), m(.3)), k.frameLight); head.position.set(-m(.72), m(2.12), -m(.02)); root.add(head); }
       break;
     }
     case 'ropes': {
