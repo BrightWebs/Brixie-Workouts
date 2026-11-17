@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { buildSkeleton, applyFrame, applyClip, holdAtChest } from './motion.js?v=20261116f';
-import { buildProps } from './props.js?v=20261116f';
+import { buildSkeleton, applyFrame, applyClip, holdAtChest } from './motion.js?v=20261116g';
+import { buildProps } from './props.js?v=20261116g';
 
 /* Rebuild muscle view: a gray studio mannequin whose worked muscles glow
    (hot orange core, cool blue-white edge), like a training-app demo render.
@@ -180,11 +180,13 @@ function bodyMaterial() {
         vec3 core = mix(magenta, orange, t);
         core = mix(core, vec3(1.0, 0.55, 0.15), smoothstep(0.6, 1.0, vDepth) * (0.4 + 0.6 * belly));
         core = mix(vec3(0.62, 0.1, 0.3), core, primaryK);            // supporting muscles: dimmer, cooler
-        float glowAmt = inside * (1.0 - 0.6 * groove) * mix(0.3, 0.45 + 0.25 * t, primaryK) * (0.85 + 0.15 * uPulse);
+        float glowAmt = inside * (1.0 - 0.85 * groove) * mix(0.3, 0.45 + 0.25 * t, primaryK) * (0.85 + 0.15 * uPulse);
         vec3 glow = core * glowAmt;
         float line = exp(-pow((vF - 0.5) / 0.045, 2.0));
         float outer = smoothstep(0.08, 0.5, vF) * (1.0 - smoothstep(0.5, 0.54, vF));
         glow += white * line * mix(0.35, 0.95, primaryK) * (0.8 + 0.2 * uPulse);
+        // thin bright seams where one muscle head meets the next (quads, hamstrings, calves, triceps...)
+        glow += white * inside * (1.0 - smoothstep(0.0, 0.07, vDepth)) * smoothstep(0.75, 0.95, vF) * mix(0.15, 0.45, primaryK);
         glow += violet * outer * mix(0.12, 0.45, primaryK);
         glow += mix(white, violet, 0.4) * inside * smoothstep(0.5, 0.95, fr) * 1.0 * primaryK;   // silhouette rim
         totalEmissiveRadiance += glow;`}`);
@@ -304,7 +306,7 @@ try {
   const fill = new THREE.DirectionalLight(0xc9d8ff, .75); fill.position.set(2.2, 1.0, 1.8); scene.add(fill);
   for (const [x, z] of [[-2.2, -2.4], [2.2, -2.4]]) { const rim = new THREE.DirectionalLight(0xc8d8f0, 1.3); rim.position.set(x, 2.0, z); scene.add(rim); }
 
-  const geometry = await loadBody('./body.bin?v=20261116f');
+  const geometry = await loadBody('./body.bin?v=20261116g');
   regionAttr = geometry.getAttribute('aRegion'); memberAttr = geometry.getAttribute('aMember');
   bounds = geometry.boundingBox.getSize(new THREE.Vector3());
   viewSize.set(bounds.x, bounds.y);
@@ -312,8 +314,8 @@ try {
     // animated exercise: real-world coordinates (feet on the floor at y = 0) and a skeleton
     geometry.translate(geometry.userData.center.x, geometry.userData.center.y, geometry.userData.center.z);
     const [rigJson, clip] = await Promise.all([
-      fetch('./rig.json?v=20261116f').then(r => r.json()),
-      TRACK.opt?.clip ? fetch(`./anim/${TRACK.opt.clip}.json?v=20261116f`).then(r => r.json()) : null]);
+      fetch('./rig.json?v=20261116g').then(r => r.json()),
+      TRACK.opt?.clip ? fetch(`./anim/${TRACK.opt.clip}.json?v=20261116g`).then(r => r.json()) : null]);
     rig = buildSkeleton(rigJson);
     if (clip) CLIP = clip;
     body = new THREE.SkinnedMesh(geometry, bodyMaterial());

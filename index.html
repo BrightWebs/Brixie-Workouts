@@ -923,7 +923,7 @@ function vHome(){
     <button class="btn" onclick="useStarterPlan()" ${ACTIVE?'disabled style="opacity:.5"':''}>${ACTIVE?'Finish your current workout first':'Use this session'}</button></div>
     <p class="small muted">${esc(g.guide)}</p></section>
     <section class="card"><div class="sec-head"><h3>Find exercises by muscle</h3></div><p class="small muted" style="margin:0">Tap any muscle on the body (drag to turn him around) to see the exercises that work it.</p>
-    <iframe class="anatomy-frame" loading="lazy" src="assets/anatomy/viewer.html?v=20261116f&explore=1" title="Muscle picker"></iframe>
+    <iframe class="anatomy-frame" loading="lazy" src="assets/anatomy/viewer.html?v=20261116g&explore=1" title="Muscle picker"></iframe>
     <div id="muscleExplore" class="muscle-explore"></div>
     <div class="row2"><button class="btn2" onclick="go('machines')">Gym equipment & QR</button><button class="btn2" onclick="openEx('tread')">Explore a warm-up</button></div></section>
     <details class="how source-links"><summary>Health note & sources</summary><p class="small muted">Adults are encouraged to get at least 150 minutes of moderate activity a week plus muscle-strengthening on 2 or more days (CDC). This app is general exercise education, not medical advice. Ask a professional about injuries or health conditions.</p>
@@ -1029,7 +1029,7 @@ function muscleMap(e,targets,interactive=false,animate=false){
   const mode=e.sec==='cool'?'Stretched':e.sec==='mob'?'Moved':e.sec==='warm'||e.sec==='fin'?'Working':'Primary';
   const query=`primary=${encodeURIComponent(primary.join(','))}&secondary=${encodeURIComponent(secondary.join(','))}&interactive=${interactive?1:0}&mode=${encodeURIComponent(mode)}`;
   const track=animate?motionTrack(e):null;
-  return `<section class="muscle-panel"><iframe class="anatomy-frame" loading="lazy"${track?` name="${esc('rebuild-track:'+JSON.stringify(track))}"`:''} src="assets/anatomy/viewer.html?v=20261116f&${query}${track?'&anim=1':''}" title="Muscles worked: ${esc(labels(primary))}"></iframe>
+  return `<section class="muscle-panel"><iframe class="anatomy-frame" loading="lazy"${track?` name="${esc('rebuild-track:'+JSON.stringify(track))}"`:''} src="assets/anatomy/viewer.html?v=20261116g&${query}${track?'&anim=1':''}" title="Muscles worked: ${esc(labels(primary))}"></iframe>
     <div class="muscle-legend"><span><i></i>${esc(mode)}</span>${secondary.length?'<span class="support"><i></i>Also involved</span>':''}</div>
     <p class="small"><b>${esc(mode)}:</b> ${esc(labels(primary))}${secondary.length?`<br><b>Also involved:</b> ${esc(labels(secondary))}`:''}</p>
     ${interactive?'<p class="small muted">Tap muscles on the body to add or remove targets.</p>':''}</section>`;

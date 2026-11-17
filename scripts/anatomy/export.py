@@ -29,13 +29,19 @@ print('cav pct',np.percentile(cav,[5,50,95]))
 # depth inside each muscle: 0 on its outline, 1 at its middle (drives the core->edge colour ramp)
 from scipy.sparse.csgraph import dijkstra as _dj
 EE=np.concatenate([T[:,[0,1]],T[:,[1,2]],T[:,[2,0]]]); LL=np.linalg.norm(NV[EE[:,0]]-NV[EE[:,1]],axis=1)
-same=r[EE[:,0]]==r[EE[:,1]]
+from landmarks import heads
+_cs=np.percentile(np.abs(cav),95)
+def _w(E): # crossing a groove is expensive
+    L=np.linalg.norm(NV[E[:,0]]-NV[E[:,1]],axis=1); g=np.clip(np.maximum(cav[E[:,0]],cav[E[:,1]]),0,None)
+    return L*np.exp(7*g)
+part=heads(NV,T,r,_w)
+same=part[EE[:,0]]==part[EE[:,1]]
 G=sp.csr_matrix((np.r_[LL[same],LL[same]],(np.r_[EE[same,0],EE[same,1]],np.r_[EE[same,1],EE[same,0]])),shape=(n,n))
 bnd=np.unique(EE[~same].ravel())
 dd=_dj(G,indices=bnd,min_only=True); dd[~np.isfinite(dd)]=0
 depth=np.zeros(n)
-for rid in np.unique(r):
-    m=r==rid; mx=np.percentile(dd[m],97) if m.sum()>10 else 1
+for rid in np.unique(part):
+    m=part==rid; mx=np.percentile(dd[m],97) if m.sum()>10 else 1
     depth[m]=np.clip(dd[m]/max(mx,1e-4),0,1)
 depth[r==0]=0
 Gs=sp.csr_matrix((np.ones(2*same.sum()),(np.r_[EE[same,0],EE[same,1]],np.r_[EE[same,1],EE[same,0]])),shape=(n,n)); Gs.data[:]=1
