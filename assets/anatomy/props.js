@@ -433,7 +433,15 @@ export function buildProps(id, equip, rig) {
       const seat = pad(m(.3), m(.06), m(.3)); root.add(seat);
       const fly = mesh(new THREE.CylinderGeometry(m(.25), m(.25), m(.22), 40), k.frame); fly.rotation.z = Math.PI / 2; fly.position.set(0, m(.55), mk.hipC.z + m(1.45)); root.add(fly);
       const fan = mesh(new THREE.TorusGeometry(m(.25), m(.012), 8, 40), k.frameLight); fan.position.copy(fly.position); fan.rotation.y = Math.PI / 2; root.add(fan);
-      for (const s of [-1, 1]) { const fs = pad(m(.12), m(.04), m(.28)); fs.position.set(s * m(.1), m(.38), mk.ankR.z + m(.02)); fs.rotation.x = -.8; root.add(fs); }
+      // foot plates sit right under each foot (the feet are strapped in and don't move)
+      for (const s of ['R', 'L']) {
+        const ank = W('foot' + s), fd = boneDir(rig, 'foot' + s), up = fd.clone().applyAxisAngle(v3(1, 0, 0), -Math.PI / 2);
+        const fs = new THREE.Group(), plate = mesh(roundedBox(m(.15), m(.025), m(.34), m(.01)), k.frameLight), strap = mesh(roundedBox(m(.155), m(.02), m(.06), m(.008)), k.rubber);
+        plate.position.y = -m(.0125); strap.position.set(0, m(.06), m(.02)); fs.add(plate, strap);
+        fs.position.copy(ank).addScaledVector(fd, m(.07)).addScaledVector(up, -m(.075));
+        fs.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(v3(1, 0, 0), up, fd)); root.add(fs);
+        root.add(beam(fs.position.clone().addScaledVector(up, -m(.03)), v3(fs.position.x, m(.32), fs.position.z - m(.05)), m(.04), k.frame));
+      }
       const hb = handle(m(.5)); const run = cableRun(root, [0, 0]);
       later(() => { seat.position.set(0, W('pelvis').y - m(.16), W('pelvis').z); hb.position.copy(midGrip()); run([fly.position.clone().add(v3(0, m(.05), -m(.1))), hb.position]); });
       break;

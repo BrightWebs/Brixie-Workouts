@@ -262,6 +262,9 @@ select.field{appearance:none;-webkit-appearance:none;background-image:linear-gra
 .journey-options .field{min-width:0}
 .muscle-panel{background:var(--s2);border:1px solid var(--ln);border-radius:16px;padding:14px;margin:12px 0}
 .anatomy-frame{display:block;width:100%;height:540px;border:0;border-radius:18px;margin:12px 0;background:#0e131a;box-shadow:0 10px 30px rgba(10,14,20,.18)}
+.muscle-explore h4{margin:14px 2px 4px;font-size:18px}.muscle-explore .small{margin:10px 2px 6px}
+.explore-ex{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;padding:12px 14px;margin:6px 0;border-radius:12px;border:1px solid var(--ln);background:var(--s2);color:var(--tx);font:inherit;cursor:pointer}
+.explore-ex span{font-size:12px;color:var(--mu)}
 @media(min-width:530px){.anatomy-frame{height:560px}}
 .muscle-views{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:320px;margin:12px auto}
 .muscle-view{text-align:center;font-size:11px;color:var(--mu)}
@@ -919,7 +922,9 @@ function vHome(){
     <p class="small muted starter-list">${ids.map(id=>esc(EXI[id].name)).join(' · ')}</p>
     <button class="btn" onclick="useStarterPlan()" ${ACTIVE?'disabled style="opacity:.5"':''}>${ACTIVE?'Finish your current workout first':'Use this session'}</button></div>
     <p class="small muted">${esc(g.guide)}</p></section>
-    <section class="card"><div class="sec-head"><h3>See the muscles at work</h3></div>${muscleMap(EXI.goblet)}
+    <section class="card"><div class="sec-head"><h3>Find exercises by muscle</h3></div><p class="small muted" style="margin:0">Tap any muscle on the body (drag to turn him around) to see the exercises that work it.</p>
+    <iframe class="anatomy-frame" loading="lazy" src="assets/anatomy/viewer.html?v=20261116f&explore=1" title="Muscle picker"></iframe>
+    <div id="muscleExplore" class="muscle-explore"></div>
     <div class="row2"><button class="btn2" onclick="go('machines')">Gym equipment & QR</button><button class="btn2" onclick="openEx('tread')">Explore a warm-up</button></div></section>
     <details class="how source-links"><summary>Health note & sources</summary><p class="small muted">Adults are encouraged to get at least 150 minutes of moderate activity a week plus muscle-strengthening on 2 or more days (CDC). This app is general exercise education, not medical advice. Ask a professional about injuries or health conditions.</p>
     <a href="https://fitbod.me/" target="_blank" rel="noopener">Fitbod</a><a href="https://www.nike.com/ntc-app" target="_blank" rel="noopener">Nike Training Club</a><a href="https://musclewiki.com/" target="_blank" rel="noopener">MuscleWiki</a>
@@ -1016,7 +1021,7 @@ const MOTION_OPT={goblet:{clip:'air_squat',hold:'chest'},bsq:{clip:'air_squat'},
  plank:{clip:'plank'},tread:{clip:'walking',view:1.2,lift:.125},finwalk:{clip:'walking',view:1.2,lift:.125},lpress:{footRel:true,view:1.45},spress:{elbowsOut:.9},
  legext:{tAdd:30,footRel:true,view:1.1,knee:[15,80]},legcurl:{tAdd:30,footRel:true,view:1.1,knee:[82,0]},pecdeck:{tAdd:34,fly:'deck'},cablefly:{fly:'cable'},hipabd:{tAdd:18,abduct:'out',footRel:true},
  hipadd:{tAdd:18,abduct:'in',footRel:true},abcrunch:{tAdd:26},chest:{tAdd:4},chop:{chop:true,handsX:.03},armc:{circles:true},xbody:{across:true},
- crow:{footRel:true},bridge:{mirror:true,backAt:.1,view:1.1},hipthrust:{mirror:true,backAt:.36,view:.45},seatedstep:{footRel:true},lat:{elbowsOut:.8},assist:{elbowsOut:.8}};
+ crow:{footRel:true},row:{feetFixed:true,view:1.25},finrow:{feetFixed:true,view:1.25},bridge:{mirror:true,backAt:.1,view:1.1},hipthrust:{mirror:true,backAt:.36,view:.45},seatedstep:{footRel:true},lat:{elbowsOut:.8},assist:{elbowsOut:.8}};
 function muscleMap(e,targets,interactive=false,animate=false){
   targets=targets||EX_DETAIL[e.id]||EX_TARGETS[e.id];
   if(!targets)return'';
@@ -1024,11 +1029,25 @@ function muscleMap(e,targets,interactive=false,animate=false){
   const mode=e.sec==='cool'?'Stretched':e.sec==='mob'?'Moved':e.sec==='warm'||e.sec==='fin'?'Working':'Primary';
   const query=`primary=${encodeURIComponent(primary.join(','))}&secondary=${encodeURIComponent(secondary.join(','))}&interactive=${interactive?1:0}&mode=${encodeURIComponent(mode)}`;
   const track=animate?motionTrack(e):null;
-  return `<section class="muscle-panel"><iframe class="anatomy-frame" loading="lazy"${track?` name="${esc('rebuild-track:'+JSON.stringify(track))}"`:''} src="assets/anatomy/viewer.html?v=20261116e&${query}${track?'&anim=1':''}" title="Muscles worked: ${esc(labels(primary))}"></iframe>
+  return `<section class="muscle-panel"><iframe class="anatomy-frame" loading="lazy"${track?` name="${esc('rebuild-track:'+JSON.stringify(track))}"`:''} src="assets/anatomy/viewer.html?v=20261116f&${query}${track?'&anim=1':''}" title="Muscles worked: ${esc(labels(primary))}"></iframe>
     <div class="muscle-legend"><span><i></i>${esc(mode)}</span>${secondary.length?'<span class="support"><i></i>Also involved</span>':''}</div>
     <p class="small"><b>${esc(mode)}:</b> ${esc(labels(primary))}${secondary.length?`<br><b>Also involved:</b> ${esc(labels(secondary))}`:''}</p>
     ${interactive?'<p class="small muted">Tap muscles on the body to add or remove targets.</p>':''}</section>`;
 }
+// home muscle picker: list the exercises that work the tapped muscle
+function exercisesFor(muscle,group){
+  const hit=(e,k)=>{const d=EX_DETAIL[e.id],t=EX_TARGETS[e.id]||[[],[]];return d?d[k].includes(muscle)||(!MUSCLE_DETAIL[muscle]&&d[k].includes(group)):t[k].includes(group)};
+  const primary=EX.filter(e=>hit(e,0)),support=EX.filter(e=>!primary.includes(e)&&hit(e,1));
+  return {primary,support};
+}
+window.addEventListener('message',event=>{
+  if(event.origin!==location.origin||event.data?.type!=='rebuild:explore-muscle')return;
+  const box=document.getElementById('muscleExplore');if(!box)return;
+  const {muscle,group}=event.data,{primary,support}=exercisesFor(muscle,group);
+  const row=e=>`<button class="explore-ex" onclick="openEx('${e.id}')"><b>${esc(e.name)}</b><span>${esc(e.equip)}</span></button>`;
+  box.innerHTML=`<h4>${esc(muscleLabel(muscle))}</h4>${primary.length?`<p class="small muted">Main target</p>${primary.map(row).join('')}`:''}${support.length?`<p class="small muted">Also works it</p>${support.slice(0,8).map(row).join('')}`:''}${!primary.length&&!support.length?'<p class="small muted">No exercises in your library target this muscle yet.</p>':''}`;
+  box.scrollIntoView({behavior:'smooth',block:'nearest'});
+});
 window.addEventListener('message',event=>{
   if(event.origin!==location.origin||event.data?.type!=='rebuild:select-muscle')return;
   const source=[...document.querySelectorAll('.anatomy-frame')].find(frame=>frame.contentWindow===event.source);

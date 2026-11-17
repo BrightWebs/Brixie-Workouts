@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { buildSkeleton, applyFrame, applyClip, holdAtChest } from './motion.js?v=20261116e';
-import { buildProps } from './props.js?v=20261116e';
+import { buildSkeleton, applyFrame, applyClip, holdAtChest } from './motion.js?v=20261116f';
+import { buildProps } from './props.js?v=20261116f';
 
 /* Rebuild muscle view: a gray studio mannequin whose worked muscles glow
    (hot orange core, cool blue-white edge), like a training-app demo render.
@@ -28,7 +28,7 @@ const list = key => (params.get(key) || '').split(',').filter(Boolean);
 const expand = ids => ids.flatMap(id => GROUPS[id] || [id]);
 const askedPrimary = list('primary'), askedSecondary = list('secondary');
 const primary = new Set(expand(askedPrimary)), secondary = new Set(expand(askedSecondary).filter(g => !primary.has(g)));
-const interactive = params.get('interactive') === '1';
+const interactive = params.get('interactive') === '1', explore = params.get('explore') === '1';
 const modeWord = params.get('mode') || 'Primary';
 const fixedView = params.has('view') ? parseFloat(params.get('view')) : null;
 // exercise motion track handed over by the app (2D side-view poses, see motion.js)
@@ -63,7 +63,7 @@ function setLabel(name, role) {
   if (!name) return;
   const b = document.createElement('b'); b.textContent = name;
   const s = document.createElement('span'); s.textContent = role;
-  s.className = role === modeWord ? '' : role === 'Also involved' ? 's' : 'n';
+  s.className = role === modeWord || role === 'Selected' ? '' : role === 'Also involved' ? 's' : 'n';
   labelEl.append(b, s);
 }
 function buildChips() {
@@ -304,7 +304,7 @@ try {
   const fill = new THREE.DirectionalLight(0xc9d8ff, .75); fill.position.set(2.2, 1.0, 1.8); scene.add(fill);
   for (const [x, z] of [[-2.2, -2.4], [2.2, -2.4]]) { const rim = new THREE.DirectionalLight(0xc8d8f0, 1.3); rim.position.set(x, 2.0, z); scene.add(rim); }
 
-  const geometry = await loadBody('./body.bin?v=20261116e');
+  const geometry = await loadBody('./body.bin?v=20261116f');
   regionAttr = geometry.getAttribute('aRegion'); memberAttr = geometry.getAttribute('aMember');
   bounds = geometry.boundingBox.getSize(new THREE.Vector3());
   viewSize.set(bounds.x, bounds.y);
@@ -312,8 +312,8 @@ try {
     // animated exercise: real-world coordinates (feet on the floor at y = 0) and a skeleton
     geometry.translate(geometry.userData.center.x, geometry.userData.center.y, geometry.userData.center.z);
     const [rigJson, clip] = await Promise.all([
-      fetch('./rig.json?v=20261116e').then(r => r.json()),
-      TRACK.opt?.clip ? fetch(`./anim/${TRACK.opt.clip}.json?v=20261116e`).then(r => r.json()) : null]);
+      fetch('./rig.json?v=20261116f').then(r => r.json()),
+      TRACK.opt?.clip ? fetch(`./anim/${TRACK.opt.clip}.json?v=20261116f`).then(r => r.json()) : null]);
     rig = buildSkeleton(rigJson);
     if (clip) CLIP = clip;
     body = new THREE.SkinnedMesh(geometry, bodyMaterial());
@@ -321,7 +321,7 @@ try {
     body.frustumCulled = false;
   } else body = new THREE.Mesh(geometry, bodyMaterial());
   scene.add(body);
-  if (!debug && REGIONS.some(g => levelOf(g) > 0)) {
+  if (!debug && (explore || REGIONS.some(g => levelOf(g) > 0))) {
     for (const [push, strength, color] of [[bounds.y * .003, .5, 0x8fb4ff], [bounds.y * .008, .14, 0x4f86ff]]) {
       const halo = rig ? new THREE.SkinnedMesh(geometry, haloMaterial(push, strength, color)) : new THREE.Mesh(geometry, haloMaterial(push, strength, color));
       if (rig) { halo.bind(rig.skeleton, body.bindMatrix); halo.frustumCulled = false; }
@@ -379,6 +379,7 @@ try {
   targetAngle = angle = fixedView ?? (rig ? (TRACK.opt?.view ?? .7) : firstPrimary ? FACING[firstPrimary] ?? 0 : 0);
   buildChips();
   setLabel(firstAsked ? GROUP_NAMES[firstAsked] || NAMES[firstAsked] : '', firstAsked ? modeWord : '');
+  if (explore) { labelEl.innerHTML = '<b style="font-size:13px">Tap a muscle</b>'; document.querySelector('.hint').textContent = 'Drag to turn · tap a muscle'; }
   status.hidden = true;
   idleSince = performance.now();
   render();
@@ -401,6 +402,13 @@ try {
     if (!tap) return;
     const group = pick(e); if (!group) return;
     if (group === 'none') { setLabel('Supporting area', 'Not targeted'); return; }
+    if (explore) { // muscle picker: light up what was tapped and tell the page
+      levels.value = REGIONS.map(r => r === group ? 1 : 0).concat(Array(24 - REGIONS.length).fill(0));
+      setLabel(NAMES[group], 'Selected');
+      const appGroup = Object.keys(GROUPS).find(k => k !== 'core' && k !== 'obliques' && GROUPS[k].includes(group)) || (group === 'serratus' ? 'obliques' : group);
+      parent.postMessage({ type: 'rebuild:explore-muscle', group: appGroup, muscle: group }, location.origin);
+      return;
+    }
     setLabel(NAMES[group], primary.has(group) ? modeWord : secondary.has(group) ? 'Also involved' : 'Not targeted');
     const appGroup = Object.keys(GROUPS).find(k => k !== 'core' && k !== 'obliques' && GROUPS[k].includes(group)) || (group === 'serratus' ? 'obliques' : group);
     if (interactive) parent.postMessage({ type: 'rebuild:select-muscle', group: appGroup, muscle: group }, location.origin);

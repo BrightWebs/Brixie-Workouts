@@ -100,7 +100,9 @@ export function applyFrame(rig, f, opt = {}, prog = 0) {
     const a = W(th);
     const planted = foot[1] >= 178 && !opt.footRel;
     const target = new THREE.Vector3(a.x + s * (opt.stance || 0.015), ANKLE_Y + (opt.lift || 0), (foot[0] - 100) * kL);
-    if (!planted) { const rel = fix(sag(foot[0] - hip[0], foot[1] - hip[1]).multiplyScalar(kL * 1.03)); target.y = a.y + rel.y; target.z = a.z + rel.z; }
+    if (opt.feetFixed) { // strapped into foot plates (rower): feet stay put while the hips slide
+      target.set(a.x + s * 0.01, ANKLE_Y + (180 - foot[1]) * kL, (foot[0] - 100) * kL);
+    } else if (!planted) { const rel = fix(sag(foot[0] - hip[0], foot[1] - hip[1]).multiplyScalar(kL * 1.03)); target.y = a.y + rel.y; target.z = a.z + rel.z; }
     const mid2 = [(hip[0] + foot[0]) / 2, (hip[1] + foot[1]) / 2];
     const pole = fix(sag(knee[0] - mid2[0], knee[1] - mid2[1])).add(new THREE.Vector3(s * 0.12, 0, 0));
     if (opt.knee) { // seated leg extension / curl: thigh on the seat, shin swings about the knee
