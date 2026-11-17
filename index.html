@@ -1006,7 +1006,7 @@ function muscleMap(e,targets,interactive=false){
   const [primary,secondary]=targets,labels=ids=>ids.map(muscleLabel).join(', ');
   const mode=e.sec==='cool'?'Stretched':e.sec==='mob'?'Moved':e.sec==='warm'||e.sec==='fin'?'Working':'Primary';
   const query=`primary=${encodeURIComponent(primary.join(','))}&secondary=${encodeURIComponent(secondary.join(','))}&interactive=${interactive?1:0}&mode=${encodeURIComponent(mode)}`;
-  return `<section class="muscle-panel"><iframe class="anatomy-frame" loading="lazy" src="assets/anatomy/viewer.html?${query}" title="Muscles worked: ${esc(labels(primary))}"></iframe>
+  return `<section class="muscle-panel"><iframe class="anatomy-frame" loading="lazy" src="assets/anatomy/viewer.html?v=20261116c&${query}" title="Muscles worked: ${esc(labels(primary))}"></iframe>
     <div class="muscle-legend"><span><i></i>${esc(mode)}</span>${secondary.length?'<span class="support"><i></i>Also involved</span>':''}</div>
     <p class="small"><b>${esc(mode)}:</b> ${esc(labels(primary))}${secondary.length?`<br><b>Also involved:</b> ${esc(labels(secondary))}`:''}</p>
     ${interactive?'<p class="small muted">Tap muscles on the body to add or remove targets.</p>':''}</section>`;

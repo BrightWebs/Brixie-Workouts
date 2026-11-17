@@ -45,6 +45,8 @@ const levels = { value: REGIONS.map(levelOf).concat(Array(24 - REGIONS.length).f
 function failure(error) {
   console.error('Muscle view:', error);
   status.hidden = false;
+  status.hidden = false;
+  if (window.__viewerFail) { window.__viewerFail(); return; }
   status.innerHTML = '<div>The 3D body couldn’t load on this device.<br>The muscle names are listed below the viewer.</div>';
 }
 
@@ -80,7 +82,21 @@ const nearestTurn = a => a + Math.round((angle - a) / (Math.PI * 2)) * Math.PI *
 async function loadBody(url) {
   const response = await fetch(url);
   if (!response.ok) throw new Error('body ' + response.status);
-  const buf = await response.arrayBuffer();
+  // stream the download so the spinner shows real progress on slow phone connections
+  const total = +response.headers.get('content-length') || 2800000, progressEl = document.querySelector('#progress');
+  let buf;
+  if (response.body && response.body.getReader) {
+    const reader = response.body.getReader(), chunks = []; let got = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value); got += value.length; window.__viewerProgress = got;
+      if (progressEl) progressEl.textContent = `Loading 3D body… ${Math.min(99, Math.round(got / total * 100))}%`;
+    }
+    const all = new Uint8Array(got); let o = 0;
+    for (const c of chunks) { all.set(c, o); o += c.length; }
+    buf = all.buffer;
+  } else buf = await response.arrayBuffer();
   const dv = new DataView(buf);
   if (dv.getUint32(0, true) !== 0x33444252) throw new Error('bad body file'); // "RBD3"
   const nv = dv.getUint32(4, true), nf = dv.getUint32(8, true);
@@ -259,7 +275,7 @@ try {
   const fill = new THREE.DirectionalLight(0xc9d8ff, .75); fill.position.set(2.2, 1.0, 1.8); scene.add(fill);
   for (const [x, z] of [[-2.2, -2.4], [2.2, -2.4]]) { const rim = new THREE.DirectionalLight(0xc8d8f0, 1.3); rim.position.set(x, 2.0, z); scene.add(rim); }
 
-  const geometry = await loadBody('./body.bin');
+  const geometry = await loadBody('./body.bin?v=20261116c');
   regionAttr = geometry.getAttribute('aRegion'); memberAttr = geometry.getAttribute('aMember');
   bounds = geometry.boundingBox.getSize(new THREE.Vector3());
   body = new THREE.Mesh(geometry, bodyMaterial());

@@ -30,7 +30,7 @@
     @keyframes sp{to{transform:rotate(360deg)}}
     @media(prefers-reduced-motion:reduce){#status .spin{animation:none}}
   </style>
-  <script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
+  <script type="importmap">{"imports":{"three":"./three.module.js?v=20261116c"}}</script>
 </head>
 <body>
   <div id="stage">
@@ -42,8 +42,25 @@
       <button data-mode="orbit" aria-pressed="true">3D view</button>
       <button data-mode="split" aria-pressed="false">Front + back</button>
     </div>
-    <div id="status" role="status"><div><div class="spin"></div>Loading 3D body…</div></div>
+    <div id="status" role="status"><div><div class="spin"></div><span id="progress">Loading 3D body…</span></div></div>
   </div>
-  <script type="module" src="./viewer.js"></script>
+  <script type="module" src="./viewer.js?v=20261116c" onerror="window.__viewerFail&&window.__viewerFail()"></script>
+  <script>
+    // Safety net: never leave the spinner up forever (old cached files, a dropped connection, no WebGL).
+    (function () {
+      var status = document.getElementById('status');
+      window.__viewerFail = function () {
+        if (status.hidden) return;
+        status.hidden = false;
+        status.innerHTML = '<div>The 3D body didn’t load.<br><button id="retry" style="margin-top:10px;font:inherit;font-weight:700;color:#0b0e13;background:#c8f135;border:0;border-radius:999px;padding:8px 16px">Try again</button></div>';
+        document.getElementById('retry').onclick = function () {
+          var u = new URL(location.href); u.searchParams.set('r', Date.now()); location.replace(u.href);
+        };
+      };
+      window.addEventListener('error', function (e) { if (e.target && e.target.tagName === 'SCRIPT') window.__viewerFail(); }, true);
+      setTimeout(function () { if (!status.hidden && !window.__viewerProgress) window.__viewerFail(); }, 20000);
+      setTimeout(function () { if (!status.hidden) window.__viewerFail(); }, 90000);
+    })();
+  </script>
 </body>
 </html>
