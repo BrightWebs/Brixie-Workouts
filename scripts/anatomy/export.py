@@ -50,9 +50,22 @@ cq=np.round((cav*0.5+0.5)*255).astype('<u1')
 rq=np.stack([r1,r2],1).astype('<u1')
 sq=np.round(np.stack([m1,m2],1)*255).astype('<u1')
 out=open(sys.argv[2] if len(sys.argv)>2 else 'body.bin','wb')
-out.write(b'RBD3'); out.write(struct.pack('<II',n,len(T))); out.write(struct.pack('<6f',*mn,*mx))
+out.write(b'RBD5'); out.write(struct.pack('<II',n,len(T))); out.write(struct.pack('<6f',*mn,*mx))
 dq=np.round(depth*255).astype('<u1')
-for arr in (q,nq,rq,sq,cq,dq):
+# skin weights from the Mixamo auto-rig of the full-resolution sculpt (same vertex order as RAW_GLB)
+import mixamo_rig as mr, json
+from scipy.spatial.transform import Rotation as Rot
+J,_V,Wr,_l=mr.read_rig(os.environ.get('RIG_FBX','rig.fbx'))
+inv=build.inv; cnt=np.bincount(inv,minlength=n)
+Wb=np.stack([np.bincount(inv,Wr[:,b],minlength=n) for b in range(Wr.shape[1])],1)/np.maximum(cnt,1)[:,None]
+o4=np.argsort(-Wb,1)[:,:4]; w4=np.take_along_axis(Wb,o4,1); w4/=np.maximum(w4.sum(1,keepdims=True),1e-9)
+wq=np.round(w4*255).astype(int); wq[:,0]+=255-wq.sum(1)
+si,sw=o4.astype('<u1'),wq.astype('<u1')
+rig=[{'name':j['name'],'parent':j['parent'],'t':[round(float(v),5) for v in j['t']],
+      'q':[round(float(v),6) for v in Rot.from_matrix(j['R']).as_quat()],
+      'pre':[round(float(v),6) for v in Rot.from_euler('xyz',j['pre'],degrees=True).as_quat()]} for j in J]
+json.dump(rig,open(os.path.join(os.path.dirname(sys.argv[2]),'rig.json'),'w'),separators=(',',':'))
+for arr in (q,nq,rq,sq,cq,dq,si.ravel(),sw.ravel()):
     out.write(arr.tobytes()); pad=(-out.tell())%4; out.write(b'\0'*pad)
 out.write(T.astype('<u4').tobytes()); out.close()
 np.save('reg.npy',r)

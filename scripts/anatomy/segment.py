@@ -14,6 +14,7 @@ def build(cell=0.004):
     NN=np.stack([np.bincount(inv,VN[:,i]) for i in range(3)],1); NN/=np.linalg.norm(NN,axis=1,keepdims=True)+1e-12
     T=inv[F]; ok=(T[:,0]!=T[:,1])&(T[:,1]!=T[:,2])&(T[:,0]!=T[:,2]); T=T[ok]
     _,idx=np.unique(np.sort(T,1),axis=0,return_index=True); T=T[np.sort(idx)]
+    build.inv=inv
     return NV,NN,T
 def adjacency(NV,T):
     n=len(NV)

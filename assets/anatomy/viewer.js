@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { buildSkeleton, applyFrame, applyClip, holdAtChest } from './motion.js?v=20261116e';
+import { buildProps } from './props.js?v=20261116e';
 
 /* Rebuild muscle view: a gray studio mannequin whose worked muscles glow
    (hot orange core, cool blue-white edge), like a training-app demo render.
@@ -29,12 +31,17 @@ const primary = new Set(expand(askedPrimary)), secondary = new Set(expand(askedS
 const interactive = params.get('interactive') === '1';
 const modeWord = params.get('mode') || 'Primary';
 const fixedView = params.has('view') ? parseFloat(params.get('view')) : null;
+// exercise motion track handed over by the app (2D side-view poses, see motion.js)
+const TRACK = (() => { try { if (window.name.startsWith('rebuild-track:')) return JSON.parse(window.name.slice(14)); } catch (e) { console.warn(e); } return null; })();
+// lying on the back: the side figure can't say which way the body faces, so mirror it to face up
+if (TRACK?.opt?.mirror) TRACK.frames = TRACK.frames.map(fr => fr.map((p, i) => i >= 11 ? [-p[0], p[1]] : [200 - p[0], p[1]]));
 const reduced = fixedView !== null || matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const canvas = document.querySelector('canvas'), stage = document.querySelector('#stage');
 const status = document.querySelector('#status'), labelEl = document.querySelector('#label'), targetsEl = document.querySelector('#targets');
 const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2();
-let renderer, scene, body, regionAttr, memberAttr, bounds;
+let renderer, scene, body, regionAttr, memberAttr, bounds, rig = null, props = null;
+const focus = new THREE.Vector3(), viewSize = new THREE.Vector2();
 let mode = 'orbit', angle = 0, targetAngle = 0, idleSince = 0, dragging = null, visible = true;
 const camera = new THREE.PerspectiveCamera(26, 1, .05, 50);
 const splitCams = [new THREE.PerspectiveCamera(24, 1, .05, 50), new THREE.PerspectiveCamera(24, 1, .05, 50)];
@@ -98,12 +105,12 @@ async function loadBody(url) {
     buf = all.buffer;
   } else buf = await response.arrayBuffer();
   const dv = new DataView(buf);
-  if (dv.getUint32(0, true) !== 0x33444252) throw new Error('bad body file'); // "RBD3"
+  if (dv.getUint32(0, true) !== 0x35444252) throw new Error('bad body file'); // "RBD5"
   const nv = dv.getUint32(4, true), nf = dv.getUint32(8, true);
   const mn = [0, 1, 2].map(i => dv.getFloat32(12 + i * 4, true)), mx = [0, 1, 2].map(i => dv.getFloat32(24 + i * 4, true));
   let off = 36;
   const take = (Type, count) => { const a = new Type(buf, off, count); off += a.byteLength; off += (4 - off % 4) % 4; return a; };
-  const q = take(Uint16Array, nv * 3), n = take(Int8Array, nv * 3), region = take(Uint8Array, nv * 2), member = take(Uint8Array, nv * 2), cavity = take(Uint8Array, nv), depth = take(Uint8Array, nv);
+  const q = take(Uint16Array, nv * 3), n = take(Int8Array, nv * 3), region = take(Uint8Array, nv * 2), member = take(Uint8Array, nv * 2), cavity = take(Uint8Array, nv), depth = take(Uint8Array, nv), skinI = take(Uint8Array, nv * 4), skinW = take(Uint8Array, nv * 4);
   const index = new Uint32Array(buf, off, nf * 3);
   const c = [0, 1, 2].map(k => (mn[k] + mx[k]) / 2), pos = new Float32Array(nv * 3);
   for (let i = 0; i < nv * 3; i++) { const k = i % 3; pos[i] = mn[k] + (q[i] / 65535) * (mx[k] - mn[k]) - c[k]; }
@@ -114,8 +121,11 @@ async function loadBody(url) {
   g.setAttribute('aMember', new THREE.BufferAttribute(member, 2, true));
   g.setAttribute('aCavity', new THREE.BufferAttribute(cavity, 1, true));
   g.setAttribute('aDepth', new THREE.BufferAttribute(depth, 1, true));
+  g.setAttribute('skinIndex', new THREE.BufferAttribute(skinI, 4));
+  g.setAttribute('skinWeight', new THREE.BufferAttribute(skinW, 4, true));
   g.setIndex(new THREE.BufferAttribute(index, 1));
   g.computeBoundingBox(); g.computeBoundingSphere();
+  g.userData.center = new THREE.Vector3(...c);
   return g;
 }
 
@@ -200,10 +210,10 @@ function haloMaterial(push, strength, color) {
 /* ---------- camera & render ---------- */
 function placeCamera(cam, rot, aspect, fit) {
   const v = THREE.MathUtils.degToRad(cam.fov / 2);
-  const dist = Math.max((bounds.y * fit / 2) / Math.tan(v), (bounds.x * 1.3 / aspect / 2) / Math.tan(v));
+  const dist = Math.max((viewSize.y * fit / 2) / Math.tan(v), (viewSize.x * 1.3 / aspect / 2) / Math.tan(v));
   cam.aspect = aspect;
-  cam.position.set(Math.sin(rot) * dist, bounds.y * .06, Math.cos(rot) * dist);
-  cam.lookAt(0, 0, 0);
+  cam.position.set(focus.x + Math.sin(rot) * dist, focus.y + viewSize.y * .08, focus.z + Math.cos(rot) * dist);
+  cam.lookAt(focus);
   cam.updateProjectionMatrix();
 }
 function render() {
@@ -232,6 +242,7 @@ function loop(now) {
   requestAnimationFrame(loop);
   if (!visible || !body) return;
   if (!reduced && !debug) pulse.value = 0.5 + 0.5 * Math.sin(now / 480);
+  if (rig) animate(now);
   if (mode === 'orbit' && !dragging) {
     const idle = now - idleSince > 2600;
     const sway = idle && !reduced ? Math.sin(now / 2600) * 0.3 : 0;
@@ -239,6 +250,24 @@ function loop(now) {
   }
   render();
 }
+const lerpFrame = (a, b, t) => a.map((p, i) => [p[0] + (b[i][0] - p[0]) * t, p[1] + (b[i][1] - p[1]) * t]);
+// how far through the rep each frame is (0 = start pose, 1 = end pose), from how far the hands / feet travel
+function progressOf(F) {
+  const key = fr => [fr[3][0], fr[3][1], fr[7][0], fr[7][1], fr[0][0], fr[0][1], fr[1][0], fr[1][1]];
+  const k0 = key(F[0]), d = F.map(fr => Math.hypot(...key(fr).map((v, i) => v - k0[i])));
+  const mx = Math.max(...d, 1e-6); return d.map(v => v / mx);
+}
+let PROG = null, CLIP = null;
+function poseAtPhase(p) {
+  if (CLIP) { applyClip(rig, CLIP, p); if (TRACK.opt.lift) { rig.root.position.y += TRACK.opt.lift; rig.root.updateMatrixWorld(true); } if (TRACK.opt.hold === 'chest') holdAtChest(rig); if (props) props.update(); return; }
+  const F = TRACK.frames, n = F.length, x = ((p % 1) + 1) % 1 * n, i = Math.floor(x) % n, t = x - Math.floor(x);
+  PROG = PROG || progressOf(F);
+  const pr = PROG[i] + (PROG[(i + 1) % n] - PROG[i]) * t;
+  applyFrame(rig, lerpFrame(F[i], F[(i + 1) % n], t), TRACK.opt || {}, pr);
+  if (props) props.update();
+}
+let paused = false;
+function animate(now) { if (!paused) poseAtPhase(now / (CLIP ? CLIP.frames / CLIP.fps * 1000 * (TRACK.opt.slow || 1) : TRACK.period || 3000)); }
 function setMode(next) {
   mode = next;
   document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
@@ -275,24 +304,65 @@ try {
   const fill = new THREE.DirectionalLight(0xc9d8ff, .75); fill.position.set(2.2, 1.0, 1.8); scene.add(fill);
   for (const [x, z] of [[-2.2, -2.4], [2.2, -2.4]]) { const rim = new THREE.DirectionalLight(0xc8d8f0, 1.3); rim.position.set(x, 2.0, z); scene.add(rim); }
 
-  const geometry = await loadBody('./body.bin?v=20261116c');
+  const geometry = await loadBody('./body.bin?v=20261116e');
   regionAttr = geometry.getAttribute('aRegion'); memberAttr = geometry.getAttribute('aMember');
   bounds = geometry.boundingBox.getSize(new THREE.Vector3());
-  body = new THREE.Mesh(geometry, bodyMaterial());
+  viewSize.set(bounds.x, bounds.y);
+  if (TRACK) {
+    // animated exercise: real-world coordinates (feet on the floor at y = 0) and a skeleton
+    geometry.translate(geometry.userData.center.x, geometry.userData.center.y, geometry.userData.center.z);
+    const [rigJson, clip] = await Promise.all([
+      fetch('./rig.json?v=20261116e').then(r => r.json()),
+      TRACK.opt?.clip ? fetch(`./anim/${TRACK.opt.clip}.json?v=20261116e`).then(r => r.json()) : null]);
+    rig = buildSkeleton(rigJson);
+    if (clip) CLIP = clip;
+    body = new THREE.SkinnedMesh(geometry, bodyMaterial());
+    body.add(rig.root); body.bind(rig.skeleton);
+    body.frustumCulled = false;
+  } else body = new THREE.Mesh(geometry, bodyMaterial());
   scene.add(body);
   if (!debug && REGIONS.some(g => levelOf(g) > 0)) {
     for (const [push, strength, color] of [[bounds.y * .003, .5, 0x8fb4ff], [bounds.y * .008, .14, 0x4f86ff]]) {
-      const halo = new THREE.Mesh(geometry, haloMaterial(push, strength, color));
+      const halo = rig ? new THREE.SkinnedMesh(geometry, haloMaterial(push, strength, color)) : new THREE.Mesh(geometry, haloMaterial(push, strength, color));
+      if (rig) { halo.bind(rig.skeleton, body.bindMatrix); halo.frustumCulled = false; }
       halo.renderOrder = 2; halo.raycast = () => {};
       scene.add(halo);
     }
   }
+  if (rig) {
+    // studio reflections for chrome and steel
+    const pm = new THREE.PMREMGenerator(renderer), room = new THREE.Scene();
+    room.add(new THREE.Mesh(new THREE.BoxGeometry(12, 6, 12), new THREE.MeshBasicMaterial({ color: 0x1a1f27, side: THREE.BackSide })));
+    for (const [x, y, z, w, h, c] of [[0, 2.9, 0, 6, .1, 0xffffff], [-5.9, 1.5, 0, .1, 2, 0xbfd3ff], [5.9, 1.5, 1, .1, 2, 0xfff1e0], [0, 1.5, -5.9, 3, 1.5, 0x8899bb]]) {
+      const panel = new THREE.Mesh(new THREE.BoxGeometry(Math.max(w, .1), Math.max(h, .1), x === 0 && z !== -5.9 ? 3 : .1), new THREE.MeshBasicMaterial({ color: c }));
+      panel.position.set(x, y, z); room.add(panel);
+    }
+    scene.environment = pm.fromScene(room, .04).texture;
+    scene.environmentIntensity = .7;
+    poseAtPhase(0);
+    props = buildProps(TRACK.id, TRACK.equip, rig);
+    scene.add(props.root);
+    // frame the camera on everything that moves, across the whole rep
+    const box = new THREE.Box3(), tmp = new THREE.Vector3();
+    for (let i = 0; i < TRACK.frames.length; i += 3) {
+      poseAtPhase(i / TRACK.frames.length);
+      rig.bones.forEach(b => box.expandByPoint(b.getWorldPosition(tmp)));
+    }
+    box.expandByPoint(tmp.set(box.min.x, 0, box.min.z));
+    box.min.y = 0; box.max.y += .14; box.min.x -= .12; box.max.x += .12;
+    // include the equipment, but not the floor mat
+    props.root.children.forEach(c => { if (!c.userData.isFloor) { const pb = new THREE.Box3().setFromObject(c); if (!pb.isEmpty()) box.union(pb); } });
+    box.getCenter(focus); const size = box.getSize(tmp);
+    viewSize.set(Math.max(size.x, size.z) * .9, size.y * 1.1);
+    poseAtPhase(0);
+  }
 
   // gym mat + soft contact shadow
-  const floorY = -bounds.y / 2;
-  const mat = new THREE.Mesh(new THREE.BoxGeometry(bounds.x * 1.9, bounds.y * .008, bounds.x * 1.05),
+  const floorY = rig ? 0 : -bounds.y / 2;
+  const mat = new THREE.Mesh(rig ? new THREE.CylinderGeometry(1.6, 1.6, .01, 64) : new THREE.BoxGeometry(bounds.x * 1.9, bounds.y * .008, bounds.x * 1.05),
     new THREE.MeshStandardMaterial({ color: 0x1b2028, roughness: .92 }));
   mat.position.y = floorY - bounds.y * .004;
+  if (rig) mat.position.set(focus.x, -.006, focus.z);
   scene.add(mat);
   const shadowCanvas = document.createElement('canvas'); shadowCanvas.width = shadowCanvas.height = 128;
   const ctx = shadowCanvas.getContext('2d'), grad = ctx.createRadialGradient(64, 64, 4, 64, 64, 62);
@@ -301,11 +371,12 @@ try {
   const shadow = new THREE.Mesh(new THREE.PlaneGeometry(bounds.x * 1.25, bounds.x * .65),
     new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(shadowCanvas), transparent: true, depthWrite: false }));
   shadow.rotation.x = -Math.PI / 2; shadow.position.y = floorY + bounds.y * .0015;
+  if (rig) { shadow.position.x = focus.x; shadow.position.z = focus.z; shadow.scale.set(2.2, 2.2, 1); }
   scene.add(shadow);
 
   const firstAsked = askedPrimary.find(g => GROUP_NAMES[g] || NAMES[g]);
   const firstPrimary = [...primary].find(g => NAMES[g]);
-  targetAngle = angle = fixedView ?? (firstPrimary ? FACING[firstPrimary] ?? 0 : 0);
+  targetAngle = angle = fixedView ?? (rig ? (TRACK.opt?.view ?? .7) : firstPrimary ? FACING[firstPrimary] ?? 0 : 0);
   buildChips();
   setLabel(firstAsked ? GROUP_NAMES[firstAsked] || NAMES[firstAsked] : '', firstAsked ? modeWord : '');
   status.hidden = true;

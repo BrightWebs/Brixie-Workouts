@@ -1000,13 +1000,31 @@ const EX_DETAIL={
  tread:[['quads','glutes','calves'],['hamstrings','hips']],finwalk:[['quads','glutes','calves'],['hamstrings','hips']]
 };
 const muscleLabel=id=>MUSCLE_DETAIL[id]||MUSCLE_REGIONS[id]?.label||id;
-function muscleMap(e,targets,interactive=false){
+// The 3D mannequin replays the same movement as the side-view figure: sample its pose track once per exercise.
+const TRACK_CACHE={};
+function motionTrack(e){
+  if(!e||!(e.fn||e.A))return null;
+  if(TRACK_CACHE[e.id])return TRACK_CACHE[e.id];
+  const r=v=>[Math.round(v[0]*10)/10,Math.round(v[1]*10)/10],frames=[];
+  for(let i=0;i<48;i++){const J=solve(poseAt(e,i/48));
+    frames.push([J.hip,J.sh,J.head,J.arm1.e,J.arm2.e,J.arm1.j,J.arm2.j,J.leg1.e,J.leg2.e,J.leg1.j,J.leg2.j,J.toe,J.toe2].map(r))}
+  return TRACK_CACHE[e.id]={id:e.id,equip:e.equip,period:e.period||3000,frames,opt:MOTION_OPT[e.id]||{}};
+}
+// per-exercise hints the side view can't express (hands together on one dumbbell, stance width...)
+const MOTION_OPT={goblet:{clip:'air_squat',hold:'chest'},bsq:{clip:'air_squat'},squatbw:{clip:'air_squat'},medsquat:{clip:'air_squat',hold:'chest'},
+ kbsquat:{clip:'air_squat',hold:'chest'},smith:{clip:'back_squat'},curl:{clip:'bicep_curl'},cablecurl:{clip:'bicep_curl'},pushup:{clip:'push_up'},
+ plank:{clip:'plank'},tread:{clip:'walking',view:1.2,lift:.125},finwalk:{clip:'walking',view:1.2,lift:.125},lpress:{footRel:true,view:1.45},spress:{elbowsOut:.9},
+ legext:{tAdd:30,footRel:true,view:1.1,knee:[15,80]},legcurl:{tAdd:30,footRel:true,view:1.1,knee:[82,0]},pecdeck:{tAdd:34,fly:'deck'},cablefly:{fly:'cable'},hipabd:{tAdd:18,abduct:'out',footRel:true},
+ hipadd:{tAdd:18,abduct:'in',footRel:true},abcrunch:{tAdd:26},chest:{tAdd:4},chop:{chop:true,handsX:.03},armc:{circles:true},xbody:{across:true},
+ crow:{footRel:true},bridge:{mirror:true,backAt:.1,view:1.1},hipthrust:{mirror:true,backAt:.36,view:.45},seatedstep:{footRel:true},lat:{elbowsOut:.8},assist:{elbowsOut:.8}};
+function muscleMap(e,targets,interactive=false,animate=false){
   targets=targets||EX_DETAIL[e.id]||EX_TARGETS[e.id];
   if(!targets)return'';
   const [primary,secondary]=targets,labels=ids=>ids.map(muscleLabel).join(', ');
   const mode=e.sec==='cool'?'Stretched':e.sec==='mob'?'Moved':e.sec==='warm'||e.sec==='fin'?'Working':'Primary';
   const query=`primary=${encodeURIComponent(primary.join(','))}&secondary=${encodeURIComponent(secondary.join(','))}&interactive=${interactive?1:0}&mode=${encodeURIComponent(mode)}`;
-  return `<section class="muscle-panel"><iframe class="anatomy-frame" loading="lazy" src="assets/anatomy/viewer.html?v=20261116c&${query}" title="Muscles worked: ${esc(labels(primary))}"></iframe>
+  const track=animate?motionTrack(e):null;
+  return `<section class="muscle-panel"><iframe class="anatomy-frame" loading="lazy"${track?` name="${esc('rebuild-track:'+JSON.stringify(track))}"`:''} src="assets/anatomy/viewer.html?v=20261116e&${query}${track?'&anim=1':''}" title="Muscles worked: ${esc(labels(primary))}"></iframe>
     <div class="muscle-legend"><span><i></i>${esc(mode)}</span>${secondary.length?'<span class="support"><i></i>Also involved</span>':''}</div>
     <p class="small"><b>${esc(mode)}:</b> ${esc(labels(primary))}${secondary.length?`<br><b>Also involved:</b> ${esc(labels(secondary))}`:''}</p>
     ${interactive?'<p class="small muted">Tap muscles on the body to add or remove targets.</p>':''}</section>`;
@@ -1198,8 +1216,7 @@ function closeSheet(){$('#sheetRoot').innerHTML=''}
 function openEx(id){const e=EXI[id];const ss=setsFor(id);
   let h=`<div class="eyebrow" style="color:${SEC[e.sec].c}">${SEC[e.sec].name}</div><h2 style="margin:4px 0 2px">${esc(e.name)}</h2>
   <div class="chips"><span class="chip k">${esc(e.equip)}</span><span class="chip">${esc(e.muscles)}</span></div>
-  ${muscleMap(e)}
-  <details class="how"><summary>Schematic movement guide (not a human video)</summary>${exerciseDemo(e)}</details>
+  ${muscleMap(e,undefined,false,true)}
   <div class="kv"><div><div class="lbl">Today's target</div><div class="num">${esc(rxStr(e))}</div></div>
   <div><div class="lbl">${e.type==='sets'?(e.w===null?'Load':'Suggested weight'):'Duration'}</div><div class="num">${e.type==='time'?fmtT(e.dur):e.w===null?'Bodyweight':suggestW(e)+' lb'}</div></div>
   <div><div class="lbl">Est. time</div><div class="num">${e.min<2?Math.round(e.min*60)+' s':Math.round(e.min*10)/10+' min'}</div></div>
@@ -1349,7 +1366,7 @@ function renderMachineDetail(id){
   const e=m.exercise?EXI[m.exercise]:null,steps=machineSteps(m);
   root.innerHTML=`<section class="card" style="margin-top:12px"><div class="row"><div><div class="eyebrow">${esc(m.category)} · ${esc(machineCode(m))}</div><h2 style="margin-top:4px">${esc(m.name)}</h2></div><button class="btn2 sm" onclick="closeMachineDetail()">Close</button></div>
     ${MACHINE_MANUAL?'<p class="warn">Opened using your saved manual QR match. This is your association, not a verified machine/model lookup.</p>':''}
-    ${e?`${muscleMap(e)}<details class="how"><summary>Schematic movement guide (not a human video)</summary>${exerciseDemo(e)}<p class="small muted">${m.example?'One example use':'Movement demonstration'}: ${esc(e.name)}. ${m.example?'This is not a guide to every mode or exercise on this equipment. ':''}It illustrates the movement pattern; machine model, seat and adjustment points can differ by club. Use the on-machine instructions or staff demonstration for model-specific setup.</p></details>`:`<div class="fig bigfig">${machineSketch(m)}</div><p class="small muted">Setup illustration only, not a model-specific movement animation. Follow the diagram and adjustment labels on the equipment.</p>`}
+    ${e?`${muscleMap(e,undefined,false,true)}<p class="small muted">${m.example?'One example use':'Movement demonstration'}: ${esc(e.name)}. Machine models and adjustment points differ by club; follow the on-machine instructions.</p>`:`<div class="fig bigfig">${machineSketch(m)}</div><p class="small muted">Setup illustration only, not a model-specific movement animation. Follow the diagram and adjustment labels on the equipment.</p>`}
     <div class="chips"><span class="chip k">${esc(m.category)}</span><span class="chip">${esc(machineMuscles(m))}</span></div>
     <h3>Equipment setup and start position</h3><p class="small muted">${esc(m.setup)}</p>
     <h3>How to use it</h3><ol class="cues">${steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>
@@ -1559,8 +1576,7 @@ function renderWO(){
    ${ACTIVE.pausedAt?'<div class="paused-banner"><b>Workout paused</b><div class="small">Exercise, rest and elapsed workout timers are frozen.</div></div>':''}
    <h2>${esc(e.name)}</h2>
    <div class="chips"><span class="chip k">${esc(e.equip)}</span><span class="chip">${esc(e.muscles)}</span></div>
-   ${muscleMap(e)}
-   <details class="how"><summary>Schematic movement guide (not a human video)</summary>${exerciseDemo(e)}</details>
+   ${muscleMap(e,undefined,false,true)}
    <details class="how"><summary>Setup, movement & breathing</summary><ul class="cues">${e.cues.map(c=>`<li>${esc(c)}</li>`).join('')}</ul><p class="small muted"><b>Breathing:</b> ${esc(breathingFor(e))}</p><div class="warn"><b>Avoid:</b> ${esc(e.mistake)}</div></details>
    ${activeControls()}
    ${panel}

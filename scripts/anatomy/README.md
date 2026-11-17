@@ -17,3 +17,11 @@ What it does:
 
 Format `RBD3`: header (magic, vertex count, face count, bbox), uint16 positions, int8 normals,
 uint8×2 region ids, uint8×2 memberships, uint8 groove, uint8 depth, uint32 indices.
+
+## Skeleton and motion (Mixamo)
+The mannequin was rigged with Adobe Mixamo's free auto-rigger (`fbx.py` reads its binary FBX).
+- `RIG_FBX=character.fbx` (downloaded in its original pose) supplies the skeleton and skin weights; `export.py`
+  writes them into `body.bin` (format `RBD5` adds uint8×4 joint ids + uint8×4 weights) and `assets/anatomy/rig.json`.
+- `python3 mixamo_anim.py <folder of animation FBX, no skin> assets/anatomy/rig.json assets/anatomy/anim`
+  samples Mixamo motion-capture clips (squats, curls, push-ups, plank, walking...) to per-frame joint rotations.
+Exercises without a matching clip are animated in the browser with two-bone IK on the same skeleton (`motion.js`).
